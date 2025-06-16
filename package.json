@@ -1,21 +1,30 @@
 {
     "name": "contentstack-cursor-mcp",
-    "version": "1.0.0",
-    "description": "Contentstack Content Management API MCP for Cursor",
+    "version": "1.1.0",
+    "description": "Contentstack Content Management API MCP for Cursor IDE",
     "main": "index.js",
+    "bin": {
+        "contentstack-mcp": "./mcp-server.js"
+    },
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "node test.js",
+        "start": "node test.js",
+        "mcp": "node mcp-server.js"
     },
     "keywords": [
         "cursor",
         "mcp",
         "contentstack",
         "cms",
-        "headless-cms"
+        "headless-cms",
+        "content-management",
+        "api",
+        "model-context-protocol"
     ],
-    "author": "",
+    "author": "SamueleReply",
     "license": "MIT",
     "dependencies": {
+        "@modelcontextprotocol/sdk": "^0.4.0",
         "axios": "^1.6.2",
         "dotenv": "^16.3.1"
     },
@@ -29,5 +38,15 @@
     "homepage": "https://github.com/SamueleReply/contentstack-cursor-mcp#readme",
     "publishConfig": {
         "access": "public"
-    }
+    },
+    "engines": {
+        "node": ">=14.0.0"
+    },
+    "files": [
+        "index.js",
+        "mcp-server.js",
+        "README.md",
+        "package.json",
+        "mcp-config-example.json"
+    ]
 }

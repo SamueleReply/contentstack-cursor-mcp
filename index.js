@@ -42,15 +42,48 @@ const makeRequest = async (method, endpoint, data = null, config = {}) => {
         const baseURL = getBaseURL(mergedConfig.region);
         const headers = createHeaders(mergedConfig);
 
-        const response = await axios({
+        const requestConfig = {
             method,
             url: `${baseURL}${endpoint}`,
             headers,
-            data
-        });
+            validateStatus: function (status) {
+                return status >= 200 && status < 500; // Accept all status codes less than 500
+            }
+        };
+
+        // Only add data for POST/PUT requests
+        if (data && (method === 'POST' || method === 'PUT')) {
+            requestConfig.data = data;
+        }
+
+        const response = await axios(requestConfig);
+
+        // Handle error responses
+        if (response.status >= 400) {
+            throw new Error(
+                response.data?.error_message ||
+                response.data?.error ||
+                `Request failed with status ${response.status}`
+            );
+        }
+
         return response.data;
     } catch (error) {
-        throw new Error(error.response?.data?.error_message || error.message);
+        if (error.response) {
+            // The request was made and the server responded with a status code
+            // that falls out of the range of 2xx
+            throw new Error(
+                error.response.data?.error_message ||
+                error.response.data?.error ||
+                `Request failed with status ${error.response.status}`
+            );
+        } else if (error.request) {
+            // The request was made but no response was received
+            throw new Error('No response received from server');
+        } else {
+            // Something happened in setting up the request that triggered an Error
+            throw new Error(error.message);
+        }
     }
 };
 
@@ -73,20 +106,72 @@ const getEntries = async (contentTypeUid, query = {}, config = {}) => {
     return makeRequest('GET', `/content_types/${contentTypeUid}/entries?${queryString}`, null, config);
 };
 
-const getEntry = async (contentTypeUid, entryUid, config = {}) => {
-    return makeRequest('GET', `/content_types/${contentTypeUid}/entries/${entryUid}`, null, config);
+const getEntry = async (contentTypeUid, entryUid, options = {}, config = {}) => {
+    const { environment, locale, ...otherOptions } = options;
+    const queryParams = new URLSearchParams();
+
+    if (environment) queryParams.append('environment', environment);
+    if (locale) queryParams.append('locale', locale);
+
+    // Add any other query parameters
+    Object.entries(otherOptions).forEach(([key, value]) => {
+        queryParams.append(key, value);
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = `/content_types/${contentTypeUid}/entries/${entryUid}${queryString ? `?${queryString}` : ''}`;
+    return makeRequest('GET', endpoint, null, config);
 };
 
-const createEntry = async (contentTypeUid, data, config = {}) => {
-    return makeRequest('POST', `/content_types/${contentTypeUid}/entries`, data, config);
+const createEntry = async (contentTypeUid, data, options = {}, config = {}) => {
+    const { environment, locale, ...otherOptions } = options;
+    const queryParams = new URLSearchParams();
+
+    if (environment) queryParams.append('environment', environment);
+    if (locale) queryParams.append('locale', locale);
+
+    // Add any other query parameters
+    Object.entries(otherOptions).forEach(([key, value]) => {
+        queryParams.append(key, value);
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = `/content_types/${contentTypeUid}/entries${queryString ? `?${queryString}` : ''}`;
+    return makeRequest('POST', endpoint, data, config);
 };
 
-const updateEntry = async (contentTypeUid, entryUid, data, config = {}) => {
-    return makeRequest('PUT', `/content_types/${contentTypeUid}/entries/${entryUid}`, data, config);
+const updateEntry = async (contentTypeUid, entryUid, data, options = {}, config = {}) => {
+    const { environment, locale, ...otherOptions } = options;
+    const queryParams = new URLSearchParams();
+
+    if (environment) queryParams.append('environment', environment);
+    if (locale) queryParams.append('locale', locale);
+
+    // Add any other query parameters
+    Object.entries(otherOptions).forEach(([key, value]) => {
+        queryParams.append(key, value);
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = `/content_types/${contentTypeUid}/entries/${entryUid}${queryString ? `?${queryString}` : ''}`;
+    return makeRequest('PUT', endpoint, data, config);
 };
 
-const deleteEntry = async (contentTypeUid, entryUid, config = {}) => {
-    return makeRequest('DELETE', `/content_types/${contentTypeUid}/entries/${entryUid}`, null, config);
+const deleteEntry = async (contentTypeUid, entryUid, options = {}, config = {}) => {
+    const { environment, locale, ...otherOptions } = options;
+    const queryParams = new URLSearchParams();
+
+    if (environment) queryParams.append('environment', environment);
+    if (locale) queryParams.append('locale', locale);
+
+    // Add any other query parameters
+    Object.entries(otherOptions).forEach(([key, value]) => {
+        queryParams.append(key, value);
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = `/content_types/${contentTypeUid}/entries/${entryUid}${queryString ? `?${queryString}` : ''}`;
+    return makeRequest('DELETE', endpoint, null, config);
 };
 
 // Assets
@@ -113,12 +198,38 @@ const getEnvironment = async (uid, config = {}) => {
 };
 
 // Publish
-const publishEntry = async (data, config = {}) => {
-    return makeRequest('POST', '/publish', data, config);
+const publishEntry = async (data, options = {}, config = {}) => {
+    const { environment, locale, ...otherOptions } = options;
+    const queryParams = new URLSearchParams();
+
+    if (environment) queryParams.append('environment', environment);
+    if (locale) queryParams.append('locale', locale);
+
+    // Add any other query parameters
+    Object.entries(otherOptions).forEach(([key, value]) => {
+        queryParams.append(key, value);
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = `/publish${queryString ? `?${queryString}` : ''}`;
+    return makeRequest('POST', endpoint, data, config);
 };
 
-const unpublishEntry = async (data, config = {}) => {
-    return makeRequest('POST', '/unpublish', data, config);
+const unpublishEntry = async (data, options = {}, config = {}) => {
+    const { environment, locale, ...otherOptions } = options;
+    const queryParams = new URLSearchParams();
+
+    if (environment) queryParams.append('environment', environment);
+    if (locale) queryParams.append('locale', locale);
+
+    // Add any other query parameters
+    Object.entries(otherOptions).forEach(([key, value]) => {
+        queryParams.append(key, value);
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = `/unpublish${queryString ? `?${queryString}` : ''}`;
+    return makeRequest('POST', endpoint, data, config);
 };
 
 // Initialize function to create a configured instance
@@ -129,17 +240,17 @@ const initialize = (config = {}) => {
         getContentType: (uid) => getContentType(uid, mergedConfig),
         createContentType: (data) => createContentType(data, mergedConfig),
         getEntries: (contentTypeUid, query) => getEntries(contentTypeUid, query, mergedConfig),
-        getEntry: (contentTypeUid, entryUid) => getEntry(contentTypeUid, entryUid, mergedConfig),
-        createEntry: (contentTypeUid, data) => createEntry(contentTypeUid, data, mergedConfig),
-        updateEntry: (contentTypeUid, entryUid, data) => updateEntry(contentTypeUid, entryUid, data, mergedConfig),
-        deleteEntry: (contentTypeUid, entryUid) => deleteEntry(contentTypeUid, entryUid, mergedConfig),
+        getEntry: (contentTypeUid, entryUid, options) => getEntry(contentTypeUid, entryUid, options, mergedConfig),
+        createEntry: (contentTypeUid, data, options) => createEntry(contentTypeUid, data, options, mergedConfig),
+        updateEntry: (contentTypeUid, entryUid, data, options) => updateEntry(contentTypeUid, entryUid, data, options, mergedConfig),
+        deleteEntry: (contentTypeUid, entryUid, options) => deleteEntry(contentTypeUid, entryUid, options, mergedConfig),
         getAssets: (query) => getAssets(query, mergedConfig),
         getAsset: (assetUid) => getAsset(assetUid, mergedConfig),
         uploadAsset: (data) => uploadAsset(data, mergedConfig),
         getEnvironments: () => getEnvironments(mergedConfig),
         getEnvironment: (uid) => getEnvironment(uid, mergedConfig),
-        publishEntry: (data) => publishEntry(data, mergedConfig),
-        unpublishEntry: (data) => unpublishEntry(data, mergedConfig)
+        publishEntry: (data, options) => publishEntry(data, options, mergedConfig),
+        unpublishEntry: (data, options) => unpublishEntry(data, options, mergedConfig)
     };
 };
 
