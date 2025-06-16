@@ -1,0 +1,490 @@
+{
+    "name": "Contentstack MCP",
+    "description": "Contentstack Content Management API tools for Cursor",
+    "version": "1.0.0",
+    "commands": {
+        "getContentTypes": {
+            "description": "Get all content types",
+            "parameters": {
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region (NA, EU, AZURE_NA, AZURE_EU, GCP_NA, GCP_EU)"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "getContentType": {
+            "description": "Get a specific content type",
+            "parameters": {
+                "uid": {
+                    "type": "string",
+                    "description": "Content type UID"
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "createContentType": {
+            "description": "Create a new content type",
+            "parameters": {
+                "data": {
+                    "type": "object",
+                    "description": "Content type data"
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "getEntries": {
+            "description": "Get all entries of a content type",
+            "parameters": {
+                "contentTypeUid": {
+                    "type": "string",
+                    "description": "Content type UID"
+                },
+                "query": {
+                    "type": "object",
+                    "description": "Query parameters",
+                    "default": {}
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "getEntry": {
+            "description": "Get a specific entry",
+            "parameters": {
+                "contentTypeUid": {
+                    "type": "string",
+                    "description": "Content type UID"
+                },
+                "entryUid": {
+                    "type": "string",
+                    "description": "Entry UID"
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "createEntry": {
+            "description": "Create a new entry",
+            "parameters": {
+                "contentTypeUid": {
+                    "type": "string",
+                    "description": "Content type UID"
+                },
+                "data": {
+                    "type": "object",
+                    "description": "Entry data"
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "updateEntry": {
+            "description": "Update an existing entry",
+            "parameters": {
+                "contentTypeUid": {
+                    "type": "string",
+                    "description": "Content type UID"
+                },
+                "entryUid": {
+                    "type": "string",
+                    "description": "Entry UID"
+                },
+                "data": {
+                    "type": "object",
+                    "description": "Updated entry data"
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "deleteEntry": {
+            "description": "Delete an entry",
+            "parameters": {
+                "contentTypeUid": {
+                    "type": "string",
+                    "description": "Content type UID"
+                },
+                "entryUid": {
+                    "type": "string",
+                    "description": "Entry UID"
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "getAssets": {
+            "description": "Get all assets",
+            "parameters": {
+                "query": {
+                    "type": "object",
+                    "description": "Query parameters",
+                    "default": {}
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "getAsset": {
+            "description": "Get a specific asset",
+            "parameters": {
+                "assetUid": {
+                    "type": "string",
+                    "description": "Asset UID"
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "uploadAsset": {
+            "description": "Upload a new asset",
+            "parameters": {
+                "data": {
+                    "type": "object",
+                    "description": "Asset data"
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "getEnvironments": {
+            "description": "Get all environments",
+            "parameters": {
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "getEnvironment": {
+            "description": "Get a specific environment",
+            "parameters": {
+                "uid": {
+                    "type": "string",
+                    "description": "Environment UID"
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "publishEntry": {
+            "description": "Publish an entry",
+            "parameters": {
+                "data": {
+                    "type": "object",
+                    "description": "Publish data"
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        },
+        "unpublishEntry": {
+            "description": "Unpublish an entry",
+            "parameters": {
+                "data": {
+                    "type": "object",
+                    "description": "Unpublish data"
+                },
+                "config": {
+                    "type": "object",
+                    "description": "Configuration object (optional)",
+                    "properties": {
+                        "region": {
+                            "type": "string",
+                            "description": "Contentstack region"
+                        },
+                        "apiKey": {
+                            "type": "string",
+                            "description": "Contentstack API Key"
+                        },
+                        "managementToken": {
+                            "type": "string",
+                            "description": "Contentstack Management Token"
+                        },
+                        "deliveryToken": {
+                            "type": "string",
+                            "description": "Contentstack Delivery Token"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

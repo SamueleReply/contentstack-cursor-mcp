@@ -1,0 +1,33 @@
+{
+    "name": "contentstack-cursor-mcp",
+    "version": "1.0.0",
+    "description": "Contentstack Content Management API MCP for Cursor",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "cursor",
+        "mcp",
+        "contentstack",
+        "cms",
+        "headless-cms"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "axios": "^1.6.2",
+        "dotenv": "^16.3.1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/SamueleReply/contentstack-cursor-mcp.git"
+    },
+    "bugs": {
+        "url": "https://github.com/SamueleReply/contentstack-cursor-mcp/issues"
+    },
+    "homepage": "https://github.com/SamueleReply/contentstack-cursor-mcp#readme",
+    "publishConfig": {
+        "access": "public"
+    }
+}
