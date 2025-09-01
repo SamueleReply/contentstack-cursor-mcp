@@ -69,6 +69,8 @@ When configured as an MCP server, the following tools are available in Cursor:
 - `contentstack_get_environments` - Get all environments
 - `contentstack_publish_entry` - Publish an entry (supports environment and locale)
 - `contentstack_unpublish_entry` - Unpublish an entry (supports environment and locale)
+- `contentstack_get_languages` - Get all languages (locales) available in the stack
+- `contentstack_localize_entry` - Localize an entry to a specific locale
 
 ## Region Support
 
@@ -108,6 +110,10 @@ Available regions:
 ### Publishing
 - `publishEntry(data, options, config)` - Publish an entry
 - `unpublishEntry(data, options, config)` - Unpublish an entry
+
+### Languages and Localization
+- `getLanguages(config)` - Get all languages (locales) available in the stack
+- `localizeEntry(contentTypeUid, entryUid, data, options, config)` - Localize an entry to a specific locale
 
 ## Environment and Locale Support
 
@@ -224,6 +230,33 @@ async function getEntryWithOptions() {
         console.error(error);
     }
 }
+
+// Get all available languages/locales
+async function getLanguagesExample() {
+    try {
+        const languages = await cs.getLanguages();
+        console.log('Available languages:', languages);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Localize an entry to a specific locale
+async function localizeEntryExample() {
+    try {
+        const localizedEntry = await cs.localizeEntry('content_type_uid', 'entry_uid', {
+            entry: {
+                title: 'Titre localisé',
+                description: 'Description en français'
+            }
+        }, {
+            locale: 'fr-fr'
+        });
+        console.log('Localized entry:', localizedEntry);
+    } catch (error) {
+        console.error(error);
+    }
+}
 ```
 
 ### As an MCP Server in Cursor
@@ -234,6 +267,8 @@ Once configured in your `.cursor/mcp.json`, you can use the Contentstack tools d
 - "Show me entries for the 'blog_post' content type"
 - "Get the entry with UID 'xyz123' from content type 'product' in the development environment"
 - "Create a new blog post entry with title 'My New Post'"
+- "Get all available languages in the stack"
+- "Localize the entry 'xyz123' from content type 'blog_post' to French locale"
 
 ## Configuration
 

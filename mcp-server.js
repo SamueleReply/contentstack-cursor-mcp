@@ -330,6 +330,57 @@ class ContentstackMCPServer {
                             },
                             required: ['data']
                         }
+                    },
+                    {
+                        name: 'contentstack_get_languages',
+                        description: 'Get all languages (locales) available in the stack',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                region: {
+                                    type: 'string',
+                                    description: 'Contentstack region',
+                                    enum: ['NA', 'EU', 'AZURE_NA', 'AZURE_EU', 'GCP_NA', 'GCP_EU']
+                                }
+                            }
+                        }
+                    },
+                    {
+                        name: 'contentstack_localize_entry',
+                        description: 'Localize an entry to a specific locale',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                contentTypeUid: {
+                                    type: 'string',
+                                    description: 'Content type UID'
+                                },
+                                entryUid: {
+                                    type: 'string',
+                                    description: 'Entry UID to localize'
+                                },
+                                data: {
+                                    type: 'object',
+                                    description: 'Localized entry data'
+                                },
+                                options: {
+                                    type: 'object',
+                                    description: 'Options for locale and other parameters',
+                                    properties: {
+                                        locale: {
+                                            type: 'string',
+                                            description: 'Target locale for localization'
+                                        }
+                                    }
+                                },
+                                region: {
+                                    type: 'string',
+                                    description: 'Contentstack region',
+                                    enum: ['NA', 'EU', 'AZURE_NA', 'AZURE_EU', 'GCP_NA', 'GCP_EU']
+                                }
+                            },
+                            required: ['contentTypeUid', 'entryUid', 'data']
+                        }
                     }
                 ]
             };
@@ -460,6 +511,28 @@ class ContentstackMCPServer {
                                 {
                                     type: 'text',
                                     text: JSON.stringify(unpublishResult, null, 2)
+                                }
+                            ]
+                        };
+
+                    case 'contentstack_get_languages':
+                        const languages = await cs.getLanguages();
+                        return {
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: JSON.stringify(languages, null, 2)
+                                }
+                            ]
+                        };
+
+                    case 'contentstack_localize_entry':
+                        const localizeResult = await cs.localizeEntry(args.contentTypeUid, args.entryUid, args.data, args.options || {});
+                        return {
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: JSON.stringify(localizeResult, null, 2)
                                 }
                             ]
                         };

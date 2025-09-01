@@ -232,6 +232,28 @@ const unpublishEntry = async (data, options = {}, config = {}) => {
     return makeRequest('POST', endpoint, data, config);
 };
 
+// Languages
+const getLanguages = async (config = {}) => {
+    return makeRequest('GET', '/locales', null, config);
+};
+
+// Localize Entry
+const localizeEntry = async (contentTypeUid, entryUid, data, options = {}, config = {}) => {
+    const { locale, ...otherOptions } = options;
+    const queryParams = new URLSearchParams();
+
+    if (locale) queryParams.append('locale', locale);
+
+    // Add any other query parameters
+    Object.entries(otherOptions).forEach(([key, value]) => {
+        queryParams.append(key, value);
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = `/content_types/${contentTypeUid}/entries/${entryUid}/localize${queryString ? `?${queryString}` : ''}`;
+    return makeRequest('POST', endpoint, data, config);
+};
+
 // Initialize function to create a configured instance
 const initialize = (config = {}) => {
     const mergedConfig = { ...defaultConfig, ...config };
@@ -250,7 +272,9 @@ const initialize = (config = {}) => {
         getEnvironments: () => getEnvironments(mergedConfig),
         getEnvironment: (uid) => getEnvironment(uid, mergedConfig),
         publishEntry: (data, options) => publishEntry(data, options, mergedConfig),
-        unpublishEntry: (data, options) => unpublishEntry(data, options, mergedConfig)
+        unpublishEntry: (data, options) => unpublishEntry(data, options, mergedConfig),
+        getLanguages: () => getLanguages(mergedConfig),
+        localizeEntry: (contentTypeUid, entryUid, data, options) => localizeEntry(contentTypeUid, entryUid, data, options, mergedConfig)
     };
 };
 
@@ -271,5 +295,7 @@ module.exports = {
     getEnvironments,
     getEnvironment,
     publishEntry,
-    unpublishEntry
+    unpublishEntry,
+    getLanguages,
+    localizeEntry
 }; 

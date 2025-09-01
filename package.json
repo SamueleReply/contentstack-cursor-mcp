@@ -1,8 +1,9 @@
 {
     "name": "contentstack-cursor-mcp",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Contentstack Content Management API MCP for Cursor IDE",
     "main": "index.js",
+    "types": "index.d.ts",
     "bin": {
         "contentstack-mcp": "./mcp-server.js"
     },
@@ -44,6 +45,7 @@
     },
     "files": [
         "index.js",
+        "index.d.ts",
         "mcp-server.js",
         "README.md",
         "package.json",

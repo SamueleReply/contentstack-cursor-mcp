@@ -111,6 +111,43 @@ async function testMCP() {
             console.log('EU region test failed (expected if not configured for EU):', error.message);
         }
 
+        // 10. Test get languages functionality
+        console.log('\nTesting get languages...');
+        try {
+            const languages = await cs.getLanguages();
+            console.log('Languages:', JSON.stringify(languages, null, 2));
+        } catch (error) {
+            console.error('Get languages test failed:', error.message);
+        }
+
+        // 11. Test localize entry functionality (commented out to avoid creating test data)
+        /*
+        if (contentTypes && contentTypes.content_types && contentTypes.content_types.length > 0) {
+            const contentTypeUid = contentTypes.content_types[0].uid;
+            const entries = await cs.getEntries(contentTypeUid, { limit: 1 });
+
+            if (entries && entries.entries && entries.entries.length > 0) {
+                const entryUid = entries.entries[0].uid;
+
+                console.log('\nTesting localize entry...');
+                try {
+                    const localizeData = {
+                        entry: {
+                            title: 'Titre localisé',
+                            // Add other localized fields based on your content type
+                        }
+                    };
+                    const localizedEntry = await cs.localizeEntry(contentTypeUid, entryUid, localizeData, {
+                        locale: 'fr-fr'
+                    });
+                    console.log('Localized Entry:', JSON.stringify(localizedEntry, null, 2));
+                } catch (error) {
+                    console.error('Localize entry test failed:', error.message);
+                }
+            }
+        }
+        */
+
     } catch (error) {
         console.error('Error testing MCP:', error.message);
         if (error.response) {
