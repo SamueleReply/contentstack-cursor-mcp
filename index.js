@@ -11,14 +11,6 @@ const REGION_MAPPER = {
     'GCP_EU': 'https://gcp-eu-api.contentstack.com/v3'
 };
 
-// Default configuration
-const defaultConfig = {
-    region: process.env.CONTENTSTACK_REGION || 'NA',
-    apiKey: process.env.CONTENTSTACK_API_KEY,
-    managementToken: process.env.CONTENTSTACK_MANAGEMENT_TOKEN,
-    deliveryToken: process.env.CONTENTSTACK_DELIVERY_TOKEN
-};
-
 // Get base URL based on region
 const getBaseURL = (region) => {
     const baseURL = REGION_MAPPER[region.toUpperCase()];
@@ -38,7 +30,7 @@ const createHeaders = (config) => ({
 // Helper function to make API requests
 const makeRequest = async (method, endpoint, data = null, config = {}) => {
     try {
-        const mergedConfig = { ...defaultConfig, ...config };
+        const mergedConfig = { ...config };
         const baseURL = getBaseURL(mergedConfig.region);
         const headers = createHeaders(mergedConfig);
 
@@ -102,8 +94,48 @@ const createContentType = async (data, config = {}) => {
 
 // Entries
 const getEntries = async (contentTypeUid, query = {}, config = {}) => {
-    const queryString = new URLSearchParams(query).toString();
-    return makeRequest('GET', `/content_types/${contentTypeUid}/entries?${queryString}`, null, config);
+    const queryParams = new URLSearchParams();
+
+    // Handle complex query objects by JSON encoding them as the 'query' parameter
+    if (query && Object.keys(query).length > 0) {
+        // Check if this looks like a content filtering query (has fields like title, content, etc.)
+        const isContentQuery = Object.keys(query).some(key =>
+            !['limit', 'skip', 'environment', 'locale', 'include_count', 'include_schema', 'include_workflow', 'order_by'].includes(key)
+        );
+
+        if (isContentQuery) {
+            // For content filtering, we need to JSON encode the query object
+            const contentQuery = {};
+            const standardParams = {};
+
+            // Separate content query fields from standard parameters
+            Object.entries(query).forEach(([key, value]) => {
+                if (['limit', 'skip', 'environment', 'locale', 'include_count', 'include_schema', 'include_workflow', 'order_by'].includes(key)) {
+                    standardParams[key] = value;
+                } else {
+                    contentQuery[key] = value;
+                }
+            });
+
+            // Add the JSON-encoded content query as the 'query' parameter
+            if (Object.keys(contentQuery).length > 0) {
+                queryParams.append('query', JSON.stringify(contentQuery));
+            }
+
+            // Add standard parameters normally
+            Object.entries(standardParams).forEach(([key, value]) => {
+                queryParams.append(key, value);
+            });
+        } else {
+            // For standard parameters only, use the original approach
+            Object.entries(query).forEach(([key, value]) => {
+                queryParams.append(key, value);
+            });
+        }
+    }
+
+    const queryString = queryParams.toString();
+    return makeRequest('GET', `/content_types/${contentTypeUid}/entries${queryString ? '?' + queryString : ''}`, null, config);
 };
 
 const getEntry = async (contentTypeUid, entryUid, options = {}, config = {}) => {
@@ -198,7 +230,7 @@ const getEnvironment = async (uid, config = {}) => {
 };
 
 // Publish
-const publishEntry = async (data, options = {}, config = {}) => {
+const publishEntry = async (contentTypeUid, entryUid, data, options = {}, config = {}) => {
     const { environment, locale, ...otherOptions } = options;
     const queryParams = new URLSearchParams();
 
@@ -211,11 +243,11 @@ const publishEntry = async (data, options = {}, config = {}) => {
     });
 
     const queryString = queryParams.toString();
-    const endpoint = `/publish${queryString ? `?${queryString}` : ''}`;
+    const endpoint = `content_types/${contentTypeUid}/entries/${entryUid}/publish${queryString ? `?${queryString}` : ''}`;
     return makeRequest('POST', endpoint, data, config);
 };
 
-const unpublishEntry = async (data, options = {}, config = {}) => {
+const unpublishEntry = async (contentTypeUid, entryUid, data, options = {}, config = {}) => {
     const { environment, locale, ...otherOptions } = options;
     const queryParams = new URLSearchParams();
 
@@ -228,7 +260,7 @@ const unpublishEntry = async (data, options = {}, config = {}) => {
     });
 
     const queryString = queryParams.toString();
-    const endpoint = `/unpublish${queryString ? `?${queryString}` : ''}`;
+    const endpoint = `content_types/${contentTypeUid}/entries/${entryUid}/unpublish${queryString ? `?${queryString}` : ''}`;
     return makeRequest('POST', endpoint, data, config);
 };
 
@@ -256,7 +288,7 @@ const localizeEntry = async (contentTypeUid, entryUid, data, options = {}, confi
 
 // Initialize function to create a configured instance
 const initialize = (config = {}) => {
-    const mergedConfig = { ...defaultConfig, ...config };
+    const mergedConfig = { ...config };
     return {
         getContentTypes: () => getContentTypes(mergedConfig),
         getContentType: (uid) => getContentType(uid, mergedConfig),
@@ -271,8 +303,8 @@ const initialize = (config = {}) => {
         uploadAsset: (data) => uploadAsset(data, mergedConfig),
         getEnvironments: () => getEnvironments(mergedConfig),
         getEnvironment: (uid) => getEnvironment(uid, mergedConfig),
-        publishEntry: (data, options) => publishEntry(data, options, mergedConfig),
-        unpublishEntry: (data, options) => unpublishEntry(data, options, mergedConfig),
+        publishEntry: (contentTypeUid, entryUid, data, options) => publishEntry(contentTypeUid, entryUid, data, options, mergedConfig),
+        unpublishEntry: (contentTypeUid, entryUid, data, options) => unpublishEntry(contentTypeUid, entryUid, data, options, mergedConfig),
         getLanguages: () => getLanguages(mergedConfig),
         localizeEntry: (contentTypeUid, entryUid, data, options) => localizeEntry(contentTypeUid, entryUid, data, options, mergedConfig)
     };
