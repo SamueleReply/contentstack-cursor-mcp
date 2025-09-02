@@ -11,14 +11,6 @@ const REGION_MAPPER = {
     'GCP_EU': 'https://gcp-eu-api.contentstack.com/v3'
 };
 
-// Default configuration
-const defaultConfig = {
-    region: process.env.CONTENTSTACK_REGION || 'NA',
-    apiKey: process.env.CONTENTSTACK_API_KEY,
-    managementToken: process.env.CONTENTSTACK_MANAGEMENT_TOKEN,
-    deliveryToken: process.env.CONTENTSTACK_DELIVERY_TOKEN
-};
-
 // Get base URL based on region
 const getBaseURL = (region) => {
     const baseURL = REGION_MAPPER[region.toUpperCase()];
@@ -38,7 +30,7 @@ const createHeaders = (config) => ({
 // Helper function to make API requests
 const makeRequest = async (method, endpoint, data = null, config = {}) => {
     try {
-        const mergedConfig = { ...defaultConfig, ...config };
+        const mergedConfig = { ...config };
         const baseURL = getBaseURL(mergedConfig.region);
         const headers = createHeaders(mergedConfig);
 
@@ -60,29 +52,89 @@ const makeRequest = async (method, endpoint, data = null, config = {}) => {
 
         // Handle error responses
         if (response.status >= 400) {
-            throw new Error(
-                response.data?.error_message ||
-                response.data?.error ||
-                `Request failed with status ${response.status}`
-            );
+            const errorData = response.data;
+            let errorMessage = `Request failed with status ${response.status}`;
+
+            // Extract detailed error information from Contentstack API response
+            if (errorData) {
+                if (errorData.error_message) {
+                    errorMessage = errorData.error_message;
+                } else if (errorData.error) {
+                    errorMessage = errorData.error;
+                } else if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+                    // Handle array of errors
+                    const errorMessages = errorData.errors.map(err =>
+                        err.message || err.error_message || err.toString()
+                    );
+                    errorMessage = errorMessages.join('; ');
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
+                }
+
+                // Add additional context for specific status codes
+                switch (response.status) {
+                    case 404:
+                        if (errorMessage.includes('Request failed with status 404')) {
+                            errorMessage = 'Resource not found. This could be due to an invalid UID, non-existent environment, or missing permissions.';
+                        }
+                        break;
+                    case 401:
+                        errorMessage = `Authentication failed: ${errorMessage}. Please check your API key and management token.`;
+                        break;
+                    case 403:
+                        errorMessage = `Access forbidden: ${errorMessage}. Please check your permissions for this resource.`;
+                        break;
+                    case 422:
+                        errorMessage = `Validation error: ${errorMessage}`;
+                        break;
+                }
+            }
+
+            // Create enhanced error with additional context
+            const error = new Error(errorMessage);
+            error.status = response.status;
+            error.responseData = errorData;
+            throw error;
         }
 
         return response.data;
     } catch (error) {
+        // If this is our custom error from above, re-throw it
+        if (error.status && error.responseData !== undefined) {
+            throw error;
+        }
+
         if (error.response) {
             // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
-            throw new Error(
-                error.response.data?.error_message ||
-                error.response.data?.error ||
-                `Request failed with status ${error.response.status}`
-            );
+            // that falls out of the range of 2xx (this shouldn't happen now due to validateStatus)
+            const errorData = error.response.data;
+            let errorMessage = `Request failed with status ${error.response.status}`;
+
+            if (errorData) {
+                if (errorData.error_message) {
+                    errorMessage = errorData.error_message;
+                } else if (errorData.error) {
+                    errorMessage = errorData.error;
+                } else if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+                    const errorMessages = errorData.errors.map(err =>
+                        err.message || err.error_message || err.toString()
+                    );
+                    errorMessage = errorMessages.join('; ');
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
+                }
+            }
+
+            const enhancedError = new Error(errorMessage);
+            enhancedError.status = error.response.status;
+            enhancedError.responseData = errorData;
+            throw enhancedError;
         } else if (error.request) {
             // The request was made but no response was received
-            throw new Error('No response received from server');
+            throw new Error('No response received from Contentstack server. Please check your network connection and Contentstack service status.');
         } else {
             // Something happened in setting up the request that triggered an Error
-            throw new Error(error.message);
+            throw new Error(`Request setup error: ${error.message}`);
         }
     }
 };
@@ -102,8 +154,48 @@ const createContentType = async (data, config = {}) => {
 
 // Entries
 const getEntries = async (contentTypeUid, query = {}, config = {}) => {
-    const queryString = new URLSearchParams(query).toString();
-    return makeRequest('GET', `/content_types/${contentTypeUid}/entries?${queryString}`, null, config);
+    const queryParams = new URLSearchParams();
+
+    // Handle complex query objects by JSON encoding them as the 'query' parameter
+    if (query && Object.keys(query).length > 0) {
+        // Check if this looks like a content filtering query (has fields like title, content, etc.)
+        const isContentQuery = Object.keys(query).some(key =>
+            !['limit', 'skip', 'environment', 'locale', 'include_count', 'include_schema', 'include_workflow', 'order_by'].includes(key)
+        );
+
+        if (isContentQuery) {
+            // For content filtering, we need to JSON encode the query object
+            const contentQuery = {};
+            const standardParams = {};
+
+            // Separate content query fields from standard parameters
+            Object.entries(query).forEach(([key, value]) => {
+                if (['limit', 'skip', 'environment', 'locale', 'include_count', 'include_schema', 'include_workflow', 'order_by'].includes(key)) {
+                    standardParams[key] = value;
+                } else {
+                    contentQuery[key] = value;
+                }
+            });
+
+            // Add the JSON-encoded content query as the 'query' parameter
+            if (Object.keys(contentQuery).length > 0) {
+                queryParams.append('query', JSON.stringify(contentQuery));
+            }
+
+            // Add standard parameters normally
+            Object.entries(standardParams).forEach(([key, value]) => {
+                queryParams.append(key, value);
+            });
+        } else {
+            // For standard parameters only, use the original approach
+            Object.entries(query).forEach(([key, value]) => {
+                queryParams.append(key, value);
+            });
+        }
+    }
+
+    const queryString = queryParams.toString();
+    return makeRequest('GET', `/content_types/${contentTypeUid}/entries${queryString ? '?' + queryString : ''}`, null, config);
 };
 
 const getEntry = async (contentTypeUid, entryUid, options = {}, config = {}) => {
@@ -198,37 +290,13 @@ const getEnvironment = async (uid, config = {}) => {
 };
 
 // Publish
-const publishEntry = async (data, options = {}, config = {}) => {
-    const { environment, locale, ...otherOptions } = options;
-    const queryParams = new URLSearchParams();
-
-    if (environment) queryParams.append('environment', environment);
-    if (locale) queryParams.append('locale', locale);
-
-    // Add any other query parameters
-    Object.entries(otherOptions).forEach(([key, value]) => {
-        queryParams.append(key, value);
-    });
-
-    const queryString = queryParams.toString();
-    const endpoint = `/publish${queryString ? `?${queryString}` : ''}`;
+const publishEntry = async (contentTypeUid, entryUid, data, options = {}, config = {}) => {
+    const endpoint = `content_types/${contentTypeUid}/entries/${entryUid}/publish`;
     return makeRequest('POST', endpoint, data, config);
 };
 
-const unpublishEntry = async (data, options = {}, config = {}) => {
-    const { environment, locale, ...otherOptions } = options;
-    const queryParams = new URLSearchParams();
-
-    if (environment) queryParams.append('environment', environment);
-    if (locale) queryParams.append('locale', locale);
-
-    // Add any other query parameters
-    Object.entries(otherOptions).forEach(([key, value]) => {
-        queryParams.append(key, value);
-    });
-
-    const queryString = queryParams.toString();
-    const endpoint = `/unpublish${queryString ? `?${queryString}` : ''}`;
+const unpublishEntry = async (contentTypeUid, entryUid, data, options = {}, config = {}) => {
+    const endpoint = `content_types/${contentTypeUid}/entries/${entryUid}/unpublish`;
     return makeRequest('POST', endpoint, data, config);
 };
 
@@ -256,7 +324,7 @@ const localizeEntry = async (contentTypeUid, entryUid, data, options = {}, confi
 
 // Initialize function to create a configured instance
 const initialize = (config = {}) => {
-    const mergedConfig = { ...defaultConfig, ...config };
+    const mergedConfig = { ...config };
     return {
         getContentTypes: () => getContentTypes(mergedConfig),
         getContentType: (uid) => getContentType(uid, mergedConfig),
@@ -271,8 +339,8 @@ const initialize = (config = {}) => {
         uploadAsset: (data) => uploadAsset(data, mergedConfig),
         getEnvironments: () => getEnvironments(mergedConfig),
         getEnvironment: (uid) => getEnvironment(uid, mergedConfig),
-        publishEntry: (data, options) => publishEntry(data, options, mergedConfig),
-        unpublishEntry: (data, options) => unpublishEntry(data, options, mergedConfig),
+        publishEntry: (contentTypeUid, entryUid, data, options) => publishEntry(contentTypeUid, entryUid, data, options, mergedConfig),
+        unpublishEntry: (contentTypeUid, entryUid, data, options) => unpublishEntry(contentTypeUid, entryUid, data, options, mergedConfig),
         getLanguages: () => getLanguages(mergedConfig),
         localizeEntry: (contentTypeUid, entryUid, data, options) => localizeEntry(contentTypeUid, entryUid, data, options, mergedConfig)
     };

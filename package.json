@@ -1,7 +1,7 @@
 {
     "name": "contentstack-cursor-mcp",
-    "version": "1.1.1",
-    "description": "Contentstack Content Management API MCP for Cursor IDE",
+    "version": "1.1.12",
+    "description": "Contentstack Content Management API MCP",
     "main": "index.js",
     "types": "index.d.ts",
     "bin": {
@@ -26,6 +26,7 @@
     "license": "MIT",
     "dependencies": {
         "@modelcontextprotocol/sdk": "^0.4.0",
+        "ajv": "^8.17.1",
         "axios": "^1.6.2",
         "dotenv": "^16.3.1"
     },
