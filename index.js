@@ -339,7 +339,7 @@ const initialize = (config = {}) => {
         uploadAsset: (data) => uploadAsset(data, mergedConfig),
         getEnvironments: () => getEnvironments(mergedConfig),
         getEnvironment: (uid) => getEnvironment(uid, mergedConfig),
-        publishEntry: (contentTypeUid, entryUid, data, options) => publishEntry(contentTypeUid, entryUid, data, options, mergedConfig),
+        publishEntry: (contentTypeUid, entryUid, data, options) => publishEntry(contentTypeUid, entryUid, data, mergedConfig),
         unpublishEntry: (contentTypeUid, entryUid, data, options) => unpublishEntry(contentTypeUid, entryUid, data, options, mergedConfig),
         getLanguages: () => getLanguages(mergedConfig),
         localizeEntry: (contentTypeUid, entryUid, data, options) => localizeEntry(contentTypeUid, entryUid, data, options, mergedConfig)
