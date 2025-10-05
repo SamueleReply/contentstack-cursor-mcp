@@ -21,11 +21,20 @@ const getBaseURL = (region) => {
 };
 
 // Create headers based on config
-const createHeaders = (config) => ({
-    'api_key': config.apiKey,
-    'authorization': config.managementToken,
-    'Content-Type': 'application/json'
-});
+const createHeaders = (config) => {
+    const headers = {
+        'api_key': config.apiKey,
+        'authorization': config.managementToken,
+        'Content-Type': 'application/json'
+    };
+
+    // Add branch header if specified (required for publishing operations)
+    if (config.branch) {
+        headers['branch'] = config.branch;
+    }
+
+    return headers;
+};
 
 // Helper function to make API requests
 const makeRequest = async (method, endpoint, data = null, config = {}) => {
@@ -291,12 +300,12 @@ const getEnvironment = async (uid, config = {}) => {
 
 // Publish
 const publishEntry = async (contentTypeUid, entryUid, data, config = {}) => {
-    const endpoint = `content_types/${contentTypeUid}/entries/${entryUid}/publish`;
+    const endpoint = `/content_types/${contentTypeUid}/entries/${entryUid}/publish`;
     return makeRequest('POST', endpoint, data, config);
 };
 
 const unpublishEntry = async (contentTypeUid, entryUid, data, options = {}, config = {}) => {
-    const endpoint = `content_types/${contentTypeUid}/entries/${entryUid}/unpublish`;
+    const endpoint = `/content_types/${contentTypeUid}/entries/${entryUid}/unpublish`;
     return makeRequest('POST', endpoint, data, config);
 };
 

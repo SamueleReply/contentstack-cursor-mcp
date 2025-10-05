@@ -10,7 +10,8 @@
                 "CONTENTSTACK_API_KEY": "your_api_key_here",
                 "CONTENTSTACK_MANAGEMENT_TOKEN": "your_management_token_here",
                 "CONTENTSTACK_REGION": "NA",
-                "CONTENTSTACK_DELIVERY_TOKEN": "your_delivery_token_here"
+                "CONTENTSTACK_DELIVERY_TOKEN": "your_delivery_token_here",
+                "CONTENTSTACK_BRANCH": "main"
             }
         }
     }

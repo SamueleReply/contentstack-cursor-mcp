@@ -493,7 +493,8 @@ class ContentstackMCPServer {
                 const cs = contentstack.initialize({
                     apiKey: process.env.CONTENTSTACK_API_KEY,
                     managementToken: process.env.CONTENTSTACK_MANAGEMENT_TOKEN,
-                    region: process.env.CONTENTSTACK_REGION || 'NA'
+                    region: process.env.CONTENTSTACK_REGION || 'NA',
+                    branch: process.env.CONTENTSTACK_BRANCH || 'main'
                 });
 
                 switch (name) {
