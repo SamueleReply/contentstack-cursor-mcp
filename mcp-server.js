@@ -476,7 +476,6 @@ class ContentstackMCPServer {
             const { name, arguments: args } = request.params;
 
             try {
-                // Find the tool schema for validation
                 const tool = tools.find(t => t.name === name);
                 if (!tool) {
                     throw new this.McpError(
@@ -671,31 +670,9 @@ class ContentstackMCPServer {
                         );
                 }
             } catch (error) {
-                // Enhanced error handling with context-specific messages
                 let errorMessage = error.message || 'Unknown error occurred';
 
-                // If we have additional error details from the API response, include them
-                if (error.responseData) {
-                    const responseData = error.responseData;
-                    if (responseData.errors && Array.isArray(responseData.errors)) {
-                        const detailedErrors = responseData.errors.map(err => {
-                            if (typeof err === 'object') {
-                                return err.message || err.error_message || JSON.stringify(err);
-                            }
-                            return err.toString();
-                        });
-                        if (detailedErrors.length > 0) {
-                            errorContext += `\n\nDetailed errors: ${detailedErrors.join(', ')}`;
-                        }
-                    }
-
-                    // Include any additional helpful information
-                    if (responseData.error_code) {
-                        errorContext += `\n\nError code: ${responseData.error_code}`;
-                    }
-                }
-
-                const fullErrorMessage = `${errorMessage}${errorContext}`;
+                const fullErrorMessage = `${errorMessage}`;
 
                 throw new this.McpError(
                     this.ErrorCode.InternalError,
