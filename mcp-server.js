@@ -114,7 +114,7 @@ class ContentstackMCPServer {
         const tools = [
             {
                 name: 'contentstack_get_content_types',
-                description: 'Get all content types from Contentstack',
+                description: 'Retrieve all available content types (schemas) from your Contentstack stack. Use this tool first to understand what types of content you can work with (e.g., blog posts, products, pages). Each content type defines the structure and fields available for entries. This is essential for discovering what contentTypeUid values you can use with other tools.',
                 inputSchema: {
                     type: 'object',
                     properties: {}
@@ -122,7 +122,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'mcp_list_tools',
-                description: 'List available Contentstack tools with input schemas',
+                description: 'Get a comprehensive list of all available Contentstack MCP tools along with their complete input schemas and descriptions. Use this for reference when you need to understand what tools are available and their exact parameter requirements. Helpful for debugging tool usage or exploring capabilities.',
                 inputSchema: {
                     type: 'object',
                     properties: {}
@@ -130,13 +130,13 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_get_content_type',
-                description: 'Get a specific content type by UID',
+                description: 'Retrieve detailed schema information for a specific content type. This shows you all available fields, their types, validations, and relationships. Use this when you need to understand the exact structure before creating or updating entries. Essential for knowing what fields are required, optional, or have specific formats.',
                 inputSchema: {
                     type: 'object',
                     properties: {
                         uid: {
                             type: 'string',
-                            description: 'Content type UID'
+                            description: 'Content type UID (e.g., "blog_post", "product", "page"). Get this from contentstack_get_content_types first.'
                         }
                     },
                     required: ['uid']
@@ -144,7 +144,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_get_entries',
-                description: 'This tool is used to get all entries for a content type. You can filter entries by content fields (like title, description, etc.) and also use standard query parameters (limit, skip, environment, etc.). Content filtering fields are automatically JSON-encoded as the "query" parameter while standard parameters are passed as regular URL parameters.',
+                description: 'Retrieve entries (content items) for a specific content type with powerful filtering and pagination options. Use this to find existing content, search by field values, or get lists for display. You can combine content field filters (title="My Post") with system parameters (limit=10). Perfect for building content listings, search functionality, or finding entries to update/publish.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -154,7 +154,7 @@ class ContentstackMCPServer {
                         },
                         query: {
                             type: 'object',
-                            description: 'Query parameters - can include, in the query parameter field both content filtering fields (title, description, etc.) and standard parameters (limit, skip, environment, etc.). Content fields are automatically JSON-encoded while standard parameters are passed normally.',
+                            description: 'Flexible query object supporting both content filtering and system parameters. Content field filters (title, description, custom fields) are JSON-encoded automatically. System parameters control pagination and response format. Example: {"title": "My Blog Post", "limit": 5, "skip": 10, "include_count": true}',
                             properties: {
                                 // Standard query parameters
                                 limit: { type: 'number', description: 'Should be inside the query parameter field, Number of entries to retrieve' },
@@ -176,7 +176,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_get_entry',
-                description: 'This tool is used to get a specific entry by uid, you need to provide the content type uid and the entry uid, to get the entry uid you can use the contentstack_get_entries tool',
+                description: 'Retrieve a specific entry by its unique identifier. Use this when you know the exact entry you want to work with. The entry UID can be obtained from contentstack_get_entries results. Perfect for getting full entry details before updating, viewing complete content, or checking current field values.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -186,13 +186,13 @@ class ContentstackMCPServer {
                         },
                         entryUid: {
                             type: 'string',
-                            description: 'Entry UID'
+                            description: 'Unique entry identifier in format "blt628f856332bafc5d" (starts with "blt" followed by 16 hexadecimal characters). Found in the "uid" field of entries from contentstack_get_entries results.'
                         },
                         options: {
                             type: 'object',
                             description: 'Options for environment, locale, and other parameters',
                             properties: {
-                                environment: { type: 'string' },
+                                environment: { type: 'string', description: 'Environment name (e.g., "development", "staging", "production"). Use contentstack_get_environments to get available environment names.' },
                                 locale: { type: 'string' },
                                 include_schema: { type: 'boolean' },
                                 include_workflow: { type: 'boolean' }
@@ -204,7 +204,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_create_entry',
-                description: 'This tool is used to create a new entry in a content type, you need to provide the content type uid and the entry data',
+                description: 'Create a new content entry in Contentstack. The entry data must be wrapped in an "entry" object and match the content type schema. Use contentstack_get_content_type first to understand required fields and their formats. The created entry will be in draft status and can be published later using contentstack_publish_entry.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -214,11 +214,11 @@ class ContentstackMCPServer {
                         },
                         data: {
                             type: 'object',
-                            description: 'Entry data',
+                            description: 'Entry creation payload. Must contain an "entry" object with all the content fields defined in your content type schema.',
                             properties: {
                                 entry: {
                                     type: 'object',
-                                    description: 'Entry data'
+                                    description: 'The actual entry content matching your content type fields. Example: {"title": "My Blog Post", "content": "Post content here", "author": "John Doe"}'
                                 }
                             },
                             required: ['entry']
@@ -227,7 +227,7 @@ class ContentstackMCPServer {
                             type: 'object',
                             description: 'Options for environment, locale, and other parameters',
                             properties: {
-                                environment: { type: 'string' },
+                                environment: { type: 'string', description: 'Environment name (e.g., "development", "staging", "production"). Use contentstack_get_environments to get available environment names.' },
                                 locale: { type: 'string' }
                             }
                         }
@@ -237,7 +237,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_update_entry',
-                description: 'Update an existing entry',
+                description: 'Update an existing entry with new content. Only provide the fields you want to change - other fields will remain unchanged. The entry data must be wrapped in an "entry" object. Use contentstack_get_entry first to see current values if needed. Updated entries remain in their current publication state.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -247,7 +247,7 @@ class ContentstackMCPServer {
                         },
                         entryUid: {
                             type: 'string',
-                            description: 'Entry UID'
+                            description: 'Unique entry identifier in format "blt628f856332bafc5d" (starts with "blt" followed by 16 hexadecimal characters). Found in the "uid" field of entries from contentstack_get_entries results.'
                         },
                         data: {
                             type: 'object',
@@ -264,7 +264,7 @@ class ContentstackMCPServer {
                             type: 'object',
                             description: 'Options for environment, locale, and other parameters',
                             properties: {
-                                environment: { type: 'string' },
+                                environment: { type: 'string', description: 'Environment name (e.g., "development", "staging", "production"). Use contentstack_get_environments to get available environment names.' },
                                 locale: { type: 'string' }
                             }
                         }
@@ -274,7 +274,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_delete_entry',
-                description: 'Delete an entry',
+                description: 'Permanently delete an entry from Contentstack. This action cannot be undone. The entry will be removed from all environments where it was published. Use with caution and consider unpublishing first if you want to remove from live environments while keeping the draft.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -284,13 +284,13 @@ class ContentstackMCPServer {
                         },
                         entryUid: {
                             type: 'string',
-                            description: 'Entry UID'
+                            description: 'Unique entry identifier in format "blt628f856332bafc5d" (starts with "blt" followed by 16 hexadecimal characters). Found in the "uid" field of entries from contentstack_get_entries results.'
                         },
                         options: {
                             type: 'object',
                             description: 'Options for environment, locale, and other parameters',
                             properties: {
-                                environment: { type: 'string' },
+                                environment: { type: 'string', description: 'Environment name (e.g., "development", "staging", "production"). Use contentstack_get_environments to get available environment names.' },
                                 locale: { type: 'string' }
                             }
                         },
@@ -301,7 +301,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_get_assets',
-                description: 'Get assets from Contentstack',
+                description: 'Retrieve media assets (images, documents, videos) from your Contentstack stack. Use this to find existing assets for referencing in entries, managing media libraries, or checking asset details. Supports filtering and pagination for large asset collections.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -311,7 +311,7 @@ class ContentstackMCPServer {
                             properties: {
                                 limit: { type: 'number' },
                                 skip: { type: 'number' },
-                                environment: { type: 'string' },
+                                environment: { type: 'string', description: 'Environment name (e.g., "development", "staging", "production"). Use contentstack_get_environments to get available environment names.' },
                                 include_folders: { type: 'boolean' }
                             }
                         },
@@ -321,7 +321,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_get_environments',
-                description: 'Get all environments from Contentstack',
+                description: 'List all available environments in your Contentstack stack (e.g., development, staging, production). Use this to understand where you can publish content and what environment names to use with publishing tools. Essential for content deployment workflows.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -331,7 +331,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_publish_entry',
-                description: 'Publish an entry',
+                description: 'Publish an entry to make it live on specified environments and locales. This moves content from draft to published state, making it available via the Content Delivery API. Use contentstack_get_environments and contentstack_get_languages first to get valid environment and locale values.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -341,7 +341,7 @@ class ContentstackMCPServer {
                         },
                         entryUid: {
                             type: 'string',
-                            description: 'Entry UID to publish'
+                            description: 'Unique entry identifier to publish in format "blt628f856332bafc5d" (starts with "blt" followed by 16 hexadecimal characters). Found in the "uid" field of entries from contentstack_get_entries results.'
                         },
                         entry: {
                             type: 'object',
@@ -375,7 +375,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_unpublish_entry',
-                description: 'Unpublish an entry',
+                description: 'Remove an entry from published environments, making it unavailable via the Content Delivery API while keeping the draft version intact. Use this to take content offline temporarily or permanently without deleting it. The entry can be republished later.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -385,7 +385,7 @@ class ContentstackMCPServer {
                         },
                         entryUid: {
                             type: 'string',
-                            description: 'Entry UID to unpublish'
+                            description: 'Unique entry identifier to unpublish in format "blt628f856332bafc5d" (starts with "blt" followed by 16 hexadecimal characters). Found in the "uid" field of entries from contentstack_get_entries results.'
                         },
                         entry: {
                             type: 'object',
@@ -419,7 +419,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_get_languages',
-                description: 'Get all languages (locales) available in the stack',
+                description: 'Retrieve all configured languages/locales in your Contentstack stack (e.g., en-us, fr-fr, es-es). Use this to understand what locales are available for content localization and publishing. Essential for multilingual content management workflows.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -429,7 +429,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_localize_entry',
-                description: 'Localize an entry to a specific locale',
+                description: 'Create or update a localized version of an entry for a specific language/locale. Use this to provide translated content for multilingual websites. The entry must already exist in the master locale. Use contentstack_get_languages to see available locales.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -439,7 +439,7 @@ class ContentstackMCPServer {
                         },
                         entryUid: {
                             type: 'string',
-                            description: 'Entry UID to localize'
+                            description: 'Unique entry identifier to localize in format "blt628f856332bafc5d" (starts with "blt" followed by 16 hexadecimal characters). Found in the "uid" field of entries from contentstack_get_entries results.'
                         },
                         data: {
                             type: 'object',
