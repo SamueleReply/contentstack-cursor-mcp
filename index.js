@@ -290,7 +290,7 @@ const getEnvironment = async (uid, config = {}) => {
 };
 
 // Publish
-const publishEntry = async (contentTypeUid, entryUid, data, options = {}, config = {}) => {
+const publishEntry = async (contentTypeUid, entryUid, data, config = {}) => {
     const endpoint = `content_types/${contentTypeUid}/entries/${entryUid}/publish`;
     return makeRequest('POST', endpoint, data, config);
 };

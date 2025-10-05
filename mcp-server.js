@@ -351,21 +351,26 @@ class ContentstackMCPServer {
                                     type: 'array',
                                     items: { type: 'string' },
                                     description: 'List of environments names to publish to'
+                                },
+                                locales: {
+                                    type: 'array',
+                                    items: { type: 'string' },
+                                    description: 'List of locales codes to publish'
                                 }
                             },
-                            required: ['entry']
+                            required: ['environments', 'locales']
                         },
-                        options: {
-                            type: 'object',
-                            description: 'Options for environment, locale, and other parameters',
-                            properties: {
-                                environment: { type: 'string' },
-                                locale: { type: 'string' }
-                            }
+                        locale: {
+                            type: 'string',
+                            description: 'Primary locale code for the entry'
                         },
-
+                        version: {
+                            nullable: true,
+                            type: 'number',
+                            description: 'Version number of the entry to publish, if not requested, don\'t provide this field, the latest version will be published'
+                        }
                     },
-                    required: ['contentTypeUid', 'entryUid', 'data']
+                    required: ['contentTypeUid', 'entryUid', 'entry', 'locale']
                 }
             },
             {
@@ -607,7 +612,7 @@ class ContentstackMCPServer {
                             locale: args.locale,
                             version: args.version
                         };
-                        const publishResult = await cs.publishEntry(args.contentTypeUid, args.entryUid, publishData, args.options || {});
+                        const publishResult = await cs.publishEntry(args.contentTypeUid, args.entryUid, publishData);
                         return {
                             content: [
                                 {
