@@ -38,7 +38,7 @@ class ContentstackMCPServer {
                 capabilities: {
                     tools: {
                         listChanged: true
-                    },
+                    }
                 },
             }
         );
@@ -230,8 +230,7 @@ class ContentstackMCPServer {
                                 environment: { type: 'string' },
                                 locale: { type: 'string' }
                             }
-                        },
-
+                        }
                     },
                     required: ['contentTypeUid', 'data']
                 }
@@ -268,8 +267,7 @@ class ContentstackMCPServer {
                                 environment: { type: 'string' },
                                 locale: { type: 'string' }
                             }
-                        },
-
+                        }
                     },
                     required: ['contentTypeUid', 'entryUid', 'data']
                 }
@@ -353,26 +351,21 @@ class ContentstackMCPServer {
                                     type: 'array',
                                     items: { type: 'string' },
                                     description: 'List of environments names to publish to'
-                                },
-                                locales: {
-                                    type: 'array',
-                                    items: { type: 'string' },
-                                    description: 'List of locales codes to publish'
                                 }
                             },
-                            required: ['environments', 'locales']
+                            required: ['entry']
                         },
-                        locale: {
-                            type: 'string',
-                            description: 'Primary locale code for the entry'
+                        options: {
+                            type: 'object',
+                            description: 'Options for environment, locale, and other parameters',
+                            properties: {
+                                environment: { type: 'string' },
+                                locale: { type: 'string' }
+                            }
                         },
-                        version: {
-                            nullable: true,
-                            type: 'number',
-                            description: 'Version number of the entry to publish, if not requested, don\'t provide this field, the latest version will be published'
-                        }
+
                     },
-                    required: ['contentTypeUid', 'entryUid', 'entry', 'locale', 'version']
+                    required: ['contentTypeUid', 'entryUid', 'data']
                 }
             },
             {
@@ -462,8 +455,7 @@ class ContentstackMCPServer {
                                     description: 'Target locale for localization'
                                 }
                             }
-                        },
-
+                        }
                     },
                     required: ['contentTypeUid', 'entryUid', 'data']
                 }
