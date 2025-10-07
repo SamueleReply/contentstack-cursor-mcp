@@ -60,6 +60,8 @@ When configured as an MCP server, the following tools are available in Cursor:
 
 - `contentstack_get_content_types` - Get all content types
 - `contentstack_get_content_type` - Get a specific content type
+- `contentstack_create_content_type` - Create a new content type with custom schema
+- `contentstack_update_content_type` - Update an existing content type schema
 - `contentstack_get_entries` - Get entries for a content type
 - `contentstack_get_entry` - Get a specific entry (supports environment and locale)
 - `contentstack_create_entry` - Create a new entry (supports environment and locale)
@@ -90,6 +92,7 @@ Available regions:
 - `getContentTypes(config)` - Get all content types
 - `getContentType(uid, config)` - Get a specific content type
 - `createContentType(data, config)` - Create a new content type
+- `updateContentType(uid, data, config)` - Update an existing content type
 
 ### Entries
 - `getEntries(contentTypeUid, query, config)` - Get all entries of a content type
@@ -174,6 +177,306 @@ The `options` parameter supports:
 - `environment`: Target environment name
 - `locale`: Target locale code (e.g., 'en-us', 'fr-fr')
 - Any other query parameters supported by the Contentstack API
+
+## Content Type Management
+
+### Creating Content Types
+
+You can create content types with various field types including text, number, select fields, JSON RTE, custom asset fields, and taxonomy fields.
+
+#### Basic Content Type Example
+
+```javascript
+const newContentType = await cs.createContentType({
+    content_type: {
+        title: "Blog Post",
+        uid: "blog_post",
+        description: "Blog posts for the website",
+        schema: [
+            {
+                display_name: "Title",
+                uid: "title",
+                data_type: "text",
+                mandatory: true,
+                unique: true,
+                field_metadata: {
+                    _default: true
+                }
+            },
+            {
+                display_name: "Content",
+                uid: "content",
+                data_type: "text",
+                field_metadata: {
+                    multiline: true
+                }
+            },
+            {
+                display_name: "Publish Date",
+                uid: "publish_date",
+                data_type: "isodate",
+                mandatory: true
+            }
+        ]
+    }
+});
+```
+
+#### Content Type with Select Field (Simple Values)
+
+```javascript
+const contentTypeWithSelect = await cs.createContentType({
+    content_type: {
+        title: "Product",
+        uid: "product",
+        schema: [
+            {
+                display_name: "Title",
+                uid: "title",
+                data_type: "text",
+                mandatory: true,
+                unique: true
+            },
+            {
+                display_name: "Priority",
+                uid: "priority",
+                data_type: "text",
+                field_metadata: {
+                    description: "Product priority level"
+                },
+                enum: {
+                    advanced: false,
+                    choices: [
+                        { value: "1" },
+                        { value: "2" },
+                        { value: "3" }
+                    ]
+                }
+            }
+        ]
+    }
+});
+```
+
+#### Content Type with Select Field (Key-Value Pairs)
+
+```javascript
+const contentTypeWithAdvancedSelect = await cs.createContentType({
+    content_type: {
+        title: "Location",
+        uid: "location",
+        schema: [
+            {
+                display_name: "Title",
+                uid: "title",
+                data_type: "text",
+                mandatory: true,
+                unique: true
+            },
+            {
+                display_name: "Region",
+                uid: "region",
+                data_type: "text",
+                enum: {
+                    advanced: true,
+                    choices: [
+                        { key: "New York", value: "NY" },
+                        { key: "India", value: "IN" },
+                        { key: "Australia", value: "AUS" }
+                    ]
+                }
+            }
+        ]
+    }
+});
+```
+
+#### Content Type with JSON RTE (Rich Text Editor)
+
+```javascript
+const contentTypeWithRTE = await cs.createContentType({
+    content_type: {
+        title: "Article",
+        uid: "article",
+        schema: [
+            {
+                display_name: "Title",
+                uid: "title",
+                data_type: "text",
+                mandatory: true,
+                unique: true
+            },
+            {
+                data_type: "json",
+                display_name: "JSON RTE Content",
+                uid: "json_rte_content",
+                field_metadata: {
+                    allow_json_rte: true,
+                    rich_text_type: "advanced",
+                    description: "Rich text content with embedded entries",
+                    default_value: ""
+                },
+                reference_to: [
+                    "blog_post",
+                    "product"
+                ],
+                non_localizable: false,
+                multiple: false,
+                mandatory: false,
+                unique: false
+            }
+        ]
+    }
+});
+```
+
+#### Content Type with Custom Asset Field
+
+```javascript
+const contentTypeWithAsset = await cs.createContentType({
+    content_type: {
+        title: "Media Gallery",
+        uid: "media_gallery",
+        schema: [
+            {
+                display_name: "Title",
+                uid: "title",
+                data_type: "text",
+                mandatory: true,
+                unique: true
+            },
+            {
+                display_name: "Gallery Images",
+                uid: "gallery_images",
+                data_type: "file",
+                multiple: true,
+                mandatory: false
+            }
+        ]
+    }
+});
+```
+
+#### Content Type with Taxonomy Fields
+
+```javascript
+const contentTypeWithTaxonomy = await cs.createContentType({
+    content_type: {
+        title: "Categorized Content",
+        uid: "categorized_content",
+        schema: [
+            {
+                display_name: "Title",
+                uid: "title",
+                data_type: "text",
+                mandatory: true,
+                unique: true
+            },
+            {
+                uid: "taxonomies",
+                taxonomies: [
+                    {
+                        taxonomy_uid: "taxonomy_1",
+                        max_terms: 5,
+                        mandatory: true,
+                        non_localizable: false
+                    },
+                    {
+                        taxonomy_uid: "taxonomy_2",
+                        max_terms: 10,
+                        mandatory: false,
+                        non_localizable: false
+                    }
+                ],
+                multiple: true
+            }
+        ]
+    }
+});
+```
+
+#### Content Type with Field Visibility Rules
+
+```javascript
+const contentTypeWithRules = await cs.createContentType({
+    content_type: {
+        title: "Conditional Form",
+        uid: "conditional_form",
+        schema: [
+            {
+                display_name: "Title",
+                uid: "title",
+                data_type: "text",
+                mandatory: true,
+                unique: true
+            },
+            {
+                display_name: "Show Details",
+                uid: "show_details",
+                data_type: "boolean",
+                mandatory: false
+            },
+            {
+                display_name: "Details",
+                uid: "details",
+                data_type: "text",
+                mandatory: false
+            }
+        ],
+        field_rules: [
+            {
+                conditions: [
+                    {
+                        operand_field: "show_details",
+                        operator: "equals",
+                        value: true
+                    }
+                ],
+                match_type: "all",
+                actions: [
+                    {
+                        action: "show",
+                        target_field: "details"
+                    }
+                ]
+            }
+        ]
+    }
+});
+```
+
+### Updating Content Types
+
+To update a content type, you must provide the complete schema including all existing fields plus any new fields:
+
+```javascript
+// First, get the existing content type
+const existingContentType = await cs.getContentType('blog_post');
+
+// Modify the schema (add a new field, for example)
+existingContentType.content_type.schema.push({
+    display_name: "Author",
+    uid: "author",
+    data_type: "text",
+    mandatory: false
+});
+
+// Update the content type
+const updatedContentType = await cs.updateContentType('blog_post', {
+    content_type: existingContentType.content_type
+});
+```
+
+#### Field Visibility Rule Operators by Data Type
+
+When creating field visibility rules, use these operators based on the operand field's data type:
+
+- **Text**: `matches`, `does_not_match`, `starts_with`, `ends_with`, `contains`
+- **Number**: `equals`, `not_equals`, `less_than`, `greater_than`, `less_than_or_equals`, `greater_than_or_equals`
+- **Date**: `equals`, `not_equals`, `before_date`, `after_date` (use ISO format)
+- **Boolean**: `is`, `is_not`
+- **Select**: `is`, `is_not`
+- **Reference**: `is`, `is_not`
 
 ## Usage Example
 
@@ -267,6 +570,10 @@ Once configured in your `.cursor/mcp.json`, you can use the Contentstack tools d
 - "Show me entries for the 'blog_post' content type"
 - "Get the entry with UID 'xyz123' from content type 'product' in the development environment"
 - "Create a new blog post entry with title 'My New Post'"
+- "Create a new content type called 'Product' with fields for title, description, price, and category"
+- "Update the 'blog_post' content type to add an 'author' field"
+- "Add field visibility rules to the 'contact_form' content type"
+- "Create a content type with a select field for product categories"
 - "Get all available languages in the stack"
 - "Localize the entry 'xyz123' from content type 'blog_post' to French locale"
 

@@ -101,6 +101,22 @@ class ContentstackMCPServer {
                 helpfulMessage += '\n  Example: { "contentTypeUid": "blog", "entryUid": "entry123", "entry": { "environments": ["dev"], "locales": ["en-us"] }, "locale": "en-us", "version": 1 }';
             }
 
+            if (toolName === 'contentstack_create_content_type') {
+                const hasDataButNoContentType = args.data && !args.data.content_type;
+                if (hasDataButNoContentType) {
+                    helpfulMessage += '\n\nHelpful tip: For creating content types, wrap your schema in a "content_type" object:';
+                    helpfulMessage += '\n  Example: { "data": { "content_type": { "title": "Blog Post", "uid": "blog_post", "schema": [...] } } }';
+                }
+            }
+
+            if (toolName === 'contentstack_update_content_type') {
+                const hasDataButNoContentType = args.data && !args.data.content_type;
+                if (hasDataButNoContentType) {
+                    helpfulMessage += '\n\nHelpful tip: For updating content types, wrap your schema in a "content_type" object:';
+                    helpfulMessage += '\n  Example: { "uid": "blog_post", "data": { "content_type": { "title": "Blog Post", "schema": [...] } } }';
+                }
+            }
+
             return {
                 isValid: false,
                 error: helpfulMessage
@@ -140,6 +156,129 @@ class ContentstackMCPServer {
                         }
                     },
                     required: ['uid']
+                }
+            },
+            {
+                name: 'contentstack_create_content_type',
+                description: 'Create a new content type (schema) in Contentstack. Define the structure and fields for a new type of content. Supports all field types including text, number, boolean, date, select (with simple values or key-value pairs), JSON RTE (rich text editor with embedded entries), reference fields, custom asset fields, taxonomy fields, and field visibility rules. Use this to programmatically build your content models.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        data: {
+                            type: 'object',
+                            description: 'Content type schema definition wrapped in a "content_type" object. Must include title, uid, and schema array defining all fields.',
+                            properties: {
+                                content_type: {
+                                    type: 'object',
+                                    description: 'The content type definition with all its configuration',
+                                    properties: {
+                                        title: {
+                                            type: 'string',
+                                            description: 'Display name for the content type (e.g., "Blog Post", "Product")'
+                                        },
+                                        uid: {
+                                            type: 'string',
+                                            description: 'Unique identifier using lowercase letters, numbers, and underscores (e.g., "blog_post", "product_catalog")'
+                                        },
+                                        schema: {
+                                            type: 'array',
+                                            description: 'Array of field definitions. Each field must have display_name, uid, and data_type. Supports: text, number, boolean, isodate, file (for assets), reference, json (for JSON RTE), group, blocks. See Contentstack docs for complete field schemas.',
+                                            items: {
+                                                type: 'object',
+                                                description: 'Field definition with properties like display_name, uid, data_type, mandatory, unique, multiple, etc.'
+                                            }
+                                        },
+                                        description: {
+                                            type: 'string',
+                                            description: 'Optional description of what this content type is used for'
+                                        },
+                                        options: {
+                                            type: 'object',
+                                            description: 'Additional content type options like singleton, is_page, etc.'
+                                        },
+                                        field_rules: {
+                                            type: 'array',
+                                            description: 'Field visibility rules to show/hide fields based on conditions. Each rule has conditions (operand_field, operator, value), match_type (all/any), and actions (show/hide target_field).',
+                                            items: {
+                                                type: 'object',
+                                                properties: {
+                                                    conditions: {
+                                                        type: 'array',
+                                                        description: 'Array of conditions to evaluate'
+                                                    },
+                                                    match_type: {
+                                                        type: 'string',
+                                                        description: 'Whether "all" conditions or "any" condition should match'
+                                                    },
+                                                    actions: {
+                                                        type: 'array',
+                                                        description: 'Actions to perform when conditions are met (show/hide fields)'
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    required: ['title', 'uid', 'schema']
+                                }
+                            },
+                            required: ['content_type']
+                        }
+                    },
+                    required: ['data']
+                }
+            },
+            {
+                name: 'contentstack_update_content_type',
+                description: 'Update an existing content type schema. Modify fields, add new fields, change validations, or update field visibility rules. Note: Each update increments the content type version automatically. Be careful when modifying or removing fields that contain data. Use contentstack_get_content_type first to see the current schema.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        uid: {
+                            type: 'string',
+                            description: 'Content type UID to update (e.g., "blog_post", "product")'
+                        },
+                        data: {
+                            type: 'object',
+                            description: 'Updated content type schema wrapped in a "content_type" object. Must include the complete schema definition.',
+                            properties: {
+                                content_type: {
+                                    type: 'object',
+                                    description: 'The updated content type definition',
+                                    properties: {
+                                        title: {
+                                            type: 'string',
+                                            description: 'Display name for the content type'
+                                        },
+                                        schema: {
+                                            type: 'array',
+                                            description: 'Updated array of field definitions. Must include all fields (existing and new) that should be in the content type.',
+                                            items: {
+                                                type: 'object',
+                                                description: 'Field definition'
+                                            }
+                                        },
+                                        description: {
+                                            type: 'string',
+                                            description: 'Optional description'
+                                        },
+                                        options: {
+                                            type: 'object',
+                                            description: 'Content type options'
+                                        },
+                                        field_rules: {
+                                            type: 'array',
+                                            description: 'Field visibility rules',
+                                            items: {
+                                                type: 'object'
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            required: ['content_type']
+                        }
+                    },
+                    required: ['uid', 'data']
                 }
             },
             {
@@ -516,6 +655,28 @@ class ContentstackMCPServer {
                                 {
                                     type: 'text',
                                     text: JSON.stringify(contentType, null, 2)
+                                }
+                            ]
+                        };
+
+                    case 'contentstack_create_content_type':
+                        const newContentType = await cs.createContentType(args.data);
+                        return {
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: JSON.stringify(newContentType, null, 2)
+                                }
+                            ]
+                        };
+
+                    case 'contentstack_update_content_type':
+                        const updatedContentType = await cs.updateContentType(args.uid, args.data);
+                        return {
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: JSON.stringify(updatedContentType, null, 2)
                                 }
                             ]
                         };

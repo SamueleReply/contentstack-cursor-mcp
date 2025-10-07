@@ -161,6 +161,10 @@ const createContentType = async (data, config = {}) => {
     return makeRequest('POST', '/content_types', data, config);
 };
 
+const updateContentType = async (uid, data, config = {}) => {
+    return makeRequest('PUT', `/content_types/${uid}`, data, config);
+};
+
 // Entries
 const getEntries = async (contentTypeUid, query = {}, config = {}) => {
     const queryParams = new URLSearchParams();
@@ -338,6 +342,7 @@ const initialize = (config = {}) => {
         getContentTypes: () => getContentTypes(mergedConfig),
         getContentType: (uid) => getContentType(uid, mergedConfig),
         createContentType: (data) => createContentType(data, mergedConfig),
+        updateContentType: (uid, data) => updateContentType(uid, data, mergedConfig),
         getEntries: (contentTypeUid, query) => getEntries(contentTypeUid, query, mergedConfig),
         getEntry: (contentTypeUid, entryUid, options) => getEntry(contentTypeUid, entryUid, options, mergedConfig),
         createEntry: (contentTypeUid, data, options) => createEntry(contentTypeUid, data, options, mergedConfig),
@@ -361,6 +366,7 @@ module.exports = {
     getContentTypes,
     getContentType,
     createContentType,
+    updateContentType,
     getEntries,
     getEntry,
     createEntry,
