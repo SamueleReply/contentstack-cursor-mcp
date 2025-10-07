@@ -1,19 +1,19 @@
 # Contentstack Content Management API MCP
 
-This Multi-Command Plugin (MCP) provides a set of tools to interact with Contentstack's Content Management API directly from Cursor IDE.
+This MCP provides a set of tools to interact with Contentstack's Content Management API.
 
 ## Installation
 
 ### NPM Package
 ```bash
-npm install contentstack-cursor-mcp
+npm install contentstack-mcp
 ```
 
 ### Manual Installation
 1. Clone the repository:
 ```bash
-git clone https://github.com/SamueleReply/contentstack-cursor-mcp.git
-cd contentstack-cursor-mcp
+git clone https://github.com/SamueleReply/contentstack-mcp.git
+cd contentstack-mcp
 ```
 
 2. Install dependencies:
@@ -39,7 +39,7 @@ To use this package as an MCP server in Cursor, add the following configuration 
         "contentstack": {
             "command": "npx",
             "args": [
-                "contentstack-cursor-mcp@latest"
+                "contentstack-mcp@latest"
             ],
             "env": {
                 "CONTENTSTACK_API_KEY": "your_api_key",

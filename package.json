@@ -1,6 +1,6 @@
 {
-    "name": "contentstack-cursor-mcp",
-    "version": "1.3.0",
+    "name": "contentstack-mcp",
+    "version": "1.0.0",
     "description": "Contentstack Content Management API MCP",
     "main": "index.js",
     "types": "index.d.ts",
@@ -32,12 +32,12 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/SamueleReply/contentstack-cursor-mcp.git"
+        "url": "git+https://github.com/SamueleReply/contentstack-mcp.git"
     },
     "bugs": {
-        "url": "https://github.com/SamueleReply/contentstack-cursor-mcp/issues"
+        "url": "https://github.com/SamueleReply/contentstack-mcp/issues"
     },
-    "homepage": "https://github.com/SamueleReply/contentstack-cursor-mcp#readme",
+    "homepage": "https://github.com/SamueleReply/contentstack-mcp#readme",
     "publishConfig": {
         "access": "public"
     },
