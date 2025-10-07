@@ -62,6 +62,8 @@ When configured as an MCP server, the following tools are available in Cursor:
 - `contentstack_get_content_type` - Get a specific content type
 - `contentstack_create_content_type` - Create a new content type with custom schema
 - `contentstack_update_content_type` - Update an existing content type schema
+- `contentstack_field_types_reference` - Get comprehensive reference documentation for all available Contentstack field types with examples
+- `mcp_list_tools` - Get a list of all available MCP tools with their schemas
 - `contentstack_get_entries` - Get entries for a content type
 - `contentstack_get_entry` - Get a specific entry (supports environment and locale)
 - `contentstack_create_entry` - Create a new entry (supports environment and locale)
@@ -177,6 +179,178 @@ The `options` parameter supports:
 - `environment`: Target environment name
 - `locale`: Target locale code (e.g., 'en-us', 'fr-fr')
 - Any other query parameters supported by the Contentstack API
+
+## Field Types Reference Tool
+
+The `contentstack_field_types_reference` tool provides comprehensive documentation and examples for all available Contentstack field types. This is especially useful when creating or updating content types.
+
+### Usage
+
+**Get all field types:**
+```javascript
+// Via MCP tool
+const allFieldTypes = await mcpClient.callTool('contentstack_field_types_reference', {});
+
+// Response includes: overview, text, json, number, boolean, isodate, file, link, reference, group, blocks, global_field, extension
+```
+
+**Get specific field type:**
+```javascript
+// Via MCP tool
+const textFieldInfo = await mcpClient.callTool('contentstack_field_types_reference', {
+    fieldType: 'text'
+});
+
+// Returns detailed information about text fields including all variants:
+// - Single Line Textbox
+// - Multi Line Textbox
+// - Rich Text Editor (HTML)
+// - Markdown
+// - Select Dropdown
+```
+
+### Available Field Types
+
+| Field Type | Description | Use Cases |
+|------------|-------------|-----------|
+| `text` | Text content with multiple variants | Titles, descriptions, content, select dropdowns |
+| `number` | Numeric values | Prices, quantities, ratings |
+| `boolean` | True/false toggle | Feature flags, published status |
+| `isodate` | Date and time | Publication dates, event dates |
+| `file` | Media assets | Images, videos, documents |
+| `link` | URL with title | External links, CTAs |
+| `reference` | Entry references | Related content, categories |
+| `json` | JSON Rich Text Editor | Structured rich text content |
+| `group` | Nested field groups | Author info, address details |
+| `blocks` | Modular content blocks | Page sections, flexible layouts |
+| `global_field` | Reusable field groups | SEO metadata, social sharing |
+| `extension` | Custom field extensions | Custom widgets, integrations |
+
+### Key Field Properties
+
+All fields share these common properties:
+- `display_name` - Human-readable label (NOT "title")
+- `uid` - Unique identifier in snake_case
+- `data_type` - Field type (NOT "type")
+- `mandatory` - Boolean for required fields (NOT "required")
+- `unique` - Boolean for unique values
+- `multiple` - Boolean for multiple values
+- `non_localizable` - Boolean for shared values across locales
+- `field_metadata` - Field-specific configuration
+
+### Example: Creating a Content Type with Various Field Types
+
+```javascript
+const complexContentType = await cs.createContentType({
+    content_type: {
+        title: "Blog Post",
+        uid: "blog_post",
+        schema: [
+            // Text - Single Line
+            {
+                data_type: "text",
+                display_name: "Title",
+                uid: "title",
+                mandatory: true,
+                unique: true
+            },
+            // Text - Multi Line
+            {
+                data_type: "text",
+                display_name: "Excerpt",
+                uid: "excerpt",
+                field_metadata: {
+                    multiline: true
+                }
+            },
+            // JSON RTE
+            {
+                data_type: "json",
+                display_name: "Content",
+                uid: "content",
+                field_metadata: {
+                    allow_json_rte: true,
+                    rich_text_type: "advanced"
+                },
+                reference_to: ["sys_assets"]
+            },
+            // Select Dropdown
+            {
+                data_type: "text",
+                display_name: "Status",
+                uid: "status",
+                display_type: "dropdown",
+                enum: {
+                    advanced: false,
+                    choices: [
+                        { value: "draft" },
+                        { value: "published" }
+                    ]
+                }
+            },
+            // Number
+            {
+                data_type: "number",
+                display_name: "Read Time (minutes)",
+                uid: "read_time"
+            },
+            // Boolean
+            {
+                data_type: "boolean",
+                display_name: "Featured",
+                uid: "featured",
+                field_metadata: {
+                    default_value: false
+                }
+            },
+            // Date
+            {
+                data_type: "isodate",
+                display_name: "Publish Date",
+                uid: "publish_date"
+            },
+            // File/Asset
+            {
+                data_type: "file",
+                display_name: "Featured Image",
+                uid: "featured_image"
+            },
+            // Reference
+            {
+                data_type: "reference",
+                display_name: "Related Posts",
+                uid: "related_posts",
+                reference_to: ["blog_post"],
+                field_metadata: {
+                    ref_multiple: true
+                },
+                multiple: true
+            },
+            // Group
+            {
+                data_type: "group",
+                display_name: "Author Info",
+                uid: "author_info",
+                schema: [
+                    {
+                        data_type: "text",
+                        display_name: "Author Name",
+                        uid: "author_name"
+                    },
+                    {
+                        data_type: "text",
+                        display_name: "Bio",
+                        uid: "bio",
+                        field_metadata: {
+                            multiline: true
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+});
+```
 
 ## Content Type Management
 

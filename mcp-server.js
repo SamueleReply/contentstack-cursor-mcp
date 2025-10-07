@@ -107,6 +107,38 @@ class ContentstackMCPServer {
                     helpfulMessage += '\n\nHelpful tip: For creating content types, wrap your schema in a "content_type" object:';
                     helpfulMessage += '\n  Example: { "data": { "content_type": { "title": "Blog Post", "uid": "blog_post", "schema": [...] } } }';
                 }
+
+                // Check for common field property mistakes
+                if (args.data?.content_type?.schema && Array.isArray(args.data.content_type.schema)) {
+                    const firstField = args.data.content_type.schema[0];
+                    if (firstField && (firstField.title || firstField.type || firstField.required)) {
+                        helpfulMessage += '\n\n⚠️  IMPORTANT: Schema fields use specific property names:';
+                        helpfulMessage += '\n  ❌ WRONG: "title", "type", "required"';
+                        helpfulMessage += '\n  ✅ CORRECT: "display_name", "data_type", "mandatory"';
+                        helpfulMessage += '\n\n  Correct field structure:';
+                        helpfulMessage += '\n  {';
+                        helpfulMessage += '\n    "display_name": "Title",    ← NOT "title"';
+                        helpfulMessage += '\n    "uid": "title",             ← lowercase identifier';
+                        helpfulMessage += '\n    "data_type": "text",        ← NOT "type" (values: "text", "number", "boolean", "isodate", "file")';
+                        helpfulMessage += '\n    "mandatory": true,          ← NOT "required"';
+                        helpfulMessage += '\n    "unique": false,';
+                        helpfulMessage += '\n    "multiple": false';
+                        helpfulMessage += '\n  }';
+                        helpfulMessage += '\n\n  For dropdown/select fields, use data_type "text" with enum:';
+                        helpfulMessage += '\n  {';
+                        helpfulMessage += '\n    "display_name": "Status",';
+                        helpfulMessage += '\n    "uid": "status",';
+                        helpfulMessage += '\n    "data_type": "text",';
+                        helpfulMessage += '\n    "enum": {';
+                        helpfulMessage += '\n      "advanced": true,';
+                        helpfulMessage += '\n      "choices": [';
+                        helpfulMessage += '\n        {"key": "Active", "value": "active"},';
+                        helpfulMessage += '\n        {"key": "Inactive", "value": "inactive"}';
+                        helpfulMessage += '\n      ]';
+                        helpfulMessage += '\n    }';
+                        helpfulMessage += '\n  }';
+                    }
+                }
             }
 
             if (toolName === 'contentstack_update_content_type') {
@@ -114,6 +146,16 @@ class ContentstackMCPServer {
                 if (hasDataButNoContentType) {
                     helpfulMessage += '\n\nHelpful tip: For updating content types, wrap your schema in a "content_type" object:';
                     helpfulMessage += '\n  Example: { "uid": "blog_post", "data": { "content_type": { "title": "Blog Post", "schema": [...] } } }';
+                }
+
+                // Check for common field property mistakes
+                if (args.data?.content_type?.schema && Array.isArray(args.data.content_type.schema)) {
+                    const firstField = args.data.content_type.schema[0];
+                    if (firstField && (firstField.title || firstField.type || firstField.required)) {
+                        helpfulMessage += '\n\n⚠️  IMPORTANT: Schema fields must use exact property names from Contentstack API:';
+                        helpfulMessage += '\n  Use "display_name" NOT "title", "data_type" NOT "type", "mandatory" NOT "required"';
+                        helpfulMessage += '\n  Get the current schema first with contentstack_get_content_type to see the correct structure.';
+                    }
                 }
             }
 
@@ -124,6 +166,440 @@ class ContentstackMCPServer {
         }
 
         return { isValid: true };
+    }
+
+    getFieldTypesReference(fieldType) {
+        const fieldTypes = {
+            overview: {
+                description: "Contentstack supports various field types for building content models. Each field type has specific properties and configurations.",
+                commonProperties: {
+                    display_name: "Human-readable label for the field (e.g., 'Title', 'Description')",
+                    uid: "Unique identifier using lowercase letters, numbers, and underscores (e.g., 'title', 'blog_content')",
+                    data_type: "The type of field - determines how data is stored and displayed",
+                    mandatory: "Boolean - whether the field is required",
+                    unique: "Boolean - whether field values must be unique across entries",
+                    multiple: "Boolean - whether the field accepts multiple values",
+                    non_localizable: "Boolean - if true, field value is shared across all locales",
+                    field_metadata: "Object containing field-specific configuration options"
+                }
+            },
+            text: {
+                data_type: "text",
+                description: "Versatile field for text content - supports single-line, multi-line, rich text, markdown, and select dropdown variations",
+                variants: [
+                    {
+                        name: "Single Line Textbox",
+                        example: {
+                            data_type: "text",
+                            display_name: "Title",
+                            uid: "title",
+                            field_metadata: {
+                                description: "",
+                                default_value: "",
+                                version: 3
+                            },
+                            format: "",
+                            error_messages: {
+                                format: ""
+                            },
+                            mandatory: true,
+                            unique: true,
+                            multiple: false,
+                            non_localizable: false
+                        }
+                    },
+                    {
+                        name: "Multi Line Textbox",
+                        example: {
+                            data_type: "text",
+                            display_name: "Description",
+                            uid: "description",
+                            field_metadata: {
+                                description: "",
+                                default_value: "",
+                                multiline: true,
+                                version: 3
+                            },
+                            mandatory: false,
+                            multiple: false,
+                            non_localizable: false
+                        }
+                    },
+                    {
+                        name: "Rich Text Editor (HTML)",
+                        example: {
+                            data_type: "text",
+                            display_name: "Content",
+                            uid: "content",
+                            field_metadata: {
+                                allow_rich_text: true,
+                                description: "",
+                                multiline: false,
+                                rich_text_type: "advanced",
+                                options: [],
+                                version: 3
+                            },
+                            mandatory: false,
+                            multiple: false,
+                            non_localizable: false
+                        }
+                    },
+                    {
+                        name: "Markdown",
+                        example: {
+                            data_type: "text",
+                            display_name: "Markdown Content",
+                            uid: "markdown_content",
+                            field_metadata: {
+                                description: "",
+                                markdown: true,
+                                version: 3
+                            },
+                            mandatory: false,
+                            multiple: false,
+                            non_localizable: false
+                        }
+                    },
+                    {
+                        name: "Select Dropdown",
+                        example: {
+                            data_type: "text",
+                            display_name: "Status",
+                            display_type: "dropdown",
+                            enum: {
+                                advanced: false,
+                                choices: [
+                                    { value: "draft" },
+                                    { value: "published" },
+                                    { value: "archived" }
+                                ]
+                            },
+                            multiple: false,
+                            uid: "status",
+                            field_metadata: {
+                                description: "",
+                                default_value: "",
+                                version: 3
+                            },
+                            mandatory: false,
+                            non_localizable: false
+                        }
+                    }
+                ]
+            },
+            json: {
+                data_type: "json",
+                description: "JSON Rich Text Editor - stores content in JSON format with support for rich text editing",
+                example: {
+                    data_type: "json",
+                    display_name: "JSON Rich Text",
+                    uid: "json_rte",
+                    field_metadata: {
+                        allow_json_rte: true,
+                        embed_entry: false,
+                        description: "",
+                        default_value: "",
+                        multiline: false,
+                        rich_text_type: "advanced",
+                        options: []
+                    },
+                    reference_to: ["sys_assets"],
+                    multiple: false,
+                    non_localizable: false,
+                    mandatory: false
+                }
+            },
+            number: {
+                data_type: "number",
+                description: "Numeric field for integers or decimals",
+                example: {
+                    data_type: "number",
+                    display_name: "Price",
+                    uid: "price",
+                    field_metadata: {
+                        description: "",
+                        default_value: ""
+                    },
+                    mandatory: false,
+                    multiple: false,
+                    non_localizable: false,
+                    unique: false
+                }
+            },
+            boolean: {
+                data_type: "boolean",
+                description: "True/false toggle field",
+                example: {
+                    data_type: "boolean",
+                    display_name: "Featured",
+                    uid: "featured",
+                    field_metadata: {
+                        description: "",
+                        default_value: false
+                    },
+                    mandatory: false,
+                    multiple: false,
+                    non_localizable: false,
+                    unique: false
+                }
+            },
+            isodate: {
+                data_type: "isodate",
+                description: "Date and time field in ISO format",
+                example: {
+                    data_type: "isodate",
+                    display_name: "Publication Date",
+                    uid: "publication_date",
+                    startDate: null,
+                    endDate: null,
+                    field_metadata: {
+                        description: "",
+                        default_value: {}
+                    },
+                    mandatory: false,
+                    multiple: false,
+                    non_localizable: false,
+                    unique: false
+                }
+            },
+            file: {
+                data_type: "file",
+                description: "Asset/media file field for images, videos, documents, etc.",
+                example: {
+                    data_type: "file",
+                    display_name: "Featured Image",
+                    uid: "featured_image",
+                    extensions: [],
+                    field_metadata: {
+                        description: "",
+                        rich_text_type: "standard"
+                    },
+                    mandatory: false,
+                    multiple: false,
+                    non_localizable: false,
+                    unique: false
+                }
+            },
+            link: {
+                data_type: "link",
+                description: "Link field with title and URL properties",
+                example: {
+                    data_type: "link",
+                    display_name: "External Link",
+                    uid: "external_link",
+                    field_metadata: {
+                        description: "",
+                        default_value: {
+                            title: "",
+                            url: ""
+                        }
+                    },
+                    mandatory: false,
+                    multiple: false,
+                    non_localizable: false,
+                    unique: false
+                }
+            },
+            reference: {
+                data_type: "reference",
+                description: "Reference to other entries - creates relationships between content types",
+                example: {
+                    data_type: "reference",
+                    display_name: "Related Articles",
+                    reference_to: ["blog_post", "news_article"],
+                    field_metadata: {
+                        ref_multiple: true,
+                        ref_multiple_content_types: true
+                    },
+                    uid: "related_articles",
+                    mandatory: false,
+                    multiple: true,
+                    non_localizable: false,
+                    unique: false
+                },
+                notes: "The 'reference_to' array specifies which content types can be referenced. Use ref_multiple: true to allow multiple references."
+            },
+            group: {
+                data_type: "group",
+                description: "Groups related fields together - creates nested field structure",
+                example: {
+                    data_type: "group",
+                    display_name: "Author Info",
+                    field_metadata: {
+                        description: "",
+                        instruction: ""
+                    },
+                    schema: [
+                        {
+                            data_type: "text",
+                            display_name: "Author Name",
+                            uid: "author_name",
+                            field_metadata: {
+                                description: "",
+                                default_value: "",
+                                version: 3
+                            },
+                            mandatory: false,
+                            multiple: false,
+                            non_localizable: false,
+                            unique: false
+                        },
+                        {
+                            data_type: "text",
+                            display_name: "Author Bio",
+                            uid: "author_bio",
+                            field_metadata: {
+                                description: "",
+                                default_value: "",
+                                multiline: true,
+                                version: 3
+                            },
+                            mandatory: false,
+                            multiple: false,
+                            non_localizable: false,
+                            unique: false
+                        }
+                    ],
+                    uid: "author_info",
+                    mandatory: false,
+                    multiple: false,
+                    non_localizable: false,
+                    unique: false
+                },
+                notes: "The 'schema' array contains nested field definitions. Groups can contain any field type except other groups or modular blocks."
+            },
+            blocks: {
+                data_type: "blocks",
+                description: "Modular blocks - allows editors to choose from predefined content blocks",
+                example: {
+                    data_type: "blocks",
+                    display_name: "Page Sections",
+                    blocks: [
+                        {
+                            title: "Hero Section",
+                            uid: "hero_section",
+                            schema: [
+                                {
+                                    data_type: "text",
+                                    display_name: "Headline",
+                                    uid: "headline",
+                                    field_metadata: {
+                                        description: "",
+                                        default_value: "",
+                                        version: 3
+                                    },
+                                    mandatory: true,
+                                    multiple: false,
+                                    non_localizable: false,
+                                    unique: false
+                                },
+                                {
+                                    data_type: "file",
+                                    display_name: "Background Image",
+                                    uid: "background_image",
+                                    extensions: [],
+                                    field_metadata: {
+                                        description: ""
+                                    },
+                                    mandatory: false,
+                                    multiple: false,
+                                    non_localizable: false,
+                                    unique: false
+                                }
+                            ]
+                        },
+                        {
+                            title: "Text Block",
+                            uid: "text_block",
+                            schema: [
+                                {
+                                    data_type: "text",
+                                    display_name: "Content",
+                                    uid: "content",
+                                    field_metadata: {
+                                        description: "",
+                                        multiline: true,
+                                        version: 3
+                                    },
+                                    mandatory: true,
+                                    multiple: false,
+                                    non_localizable: false,
+                                    unique: false
+                                }
+                            ]
+                        }
+                    ],
+                    multiple: true,
+                    uid: "page_sections",
+                    field_metadata: {
+                        instruction: "",
+                        description: ""
+                    },
+                    mandatory: false,
+                    non_localizable: false,
+                    unique: false
+                },
+                notes: "The 'blocks' array defines available block types. Each block has its own schema. Editors can add multiple blocks and arrange them in any order."
+            },
+            global_field: {
+                data_type: "global_field",
+                description: "Reusable field groups that can be shared across content types",
+                example: {
+                    data_type: "global_field",
+                    display_name: "SEO Metadata",
+                    reference_to: "seo_metadata",
+                    uid: "seo",
+                    field_metadata: {
+                        description: ""
+                    },
+                    mandatory: false,
+                    multiple: false,
+                    non_localizable: false,
+                    unique: false
+                },
+                notes: "The 'reference_to' specifies the UID of the global field to reference. Global fields must be created separately before being referenced."
+            },
+            extension: {
+                data_type: "extension",
+                description: "Custom field extension for specialized functionality",
+                example: {
+                    data_type: "extension",
+                    display_name: "Custom Widget",
+                    extension_uid: "blt1234567890abcdef",
+                    uid: "custom_widget",
+                    field_metadata: {
+                        extension: true,
+                        description: ""
+                    },
+                    config: {},
+                    mandatory: false,
+                    multiple: false,
+                    non_localizable: false,
+                    unique: false
+                },
+                notes: "The 'extension_uid' references a custom extension created in Contentstack. Extensions must be created before being used in content types."
+            }
+        };
+
+        // If a specific field type is requested
+        if (fieldType && fieldType !== 'all') {
+            const requestedType = fieldTypes[fieldType];
+            if (requestedType) {
+                return {
+                    fieldType: fieldType,
+                    ...requestedType,
+                    commonProperties: fieldTypes.overview.commonProperties
+                };
+            } else {
+                return {
+                    error: `Unknown field type: ${fieldType}`,
+                    availableTypes: Object.keys(fieldTypes).filter(k => k !== 'overview')
+                };
+            }
+        }
+
+        // Return all field types
+        return fieldTypes;
     }
 
     setupToolHandlers() {
@@ -145,6 +621,20 @@ class ContentstackMCPServer {
                 }
             },
             {
+                name: 'contentstack_field_types_reference',
+                description: 'Get comprehensive reference documentation for all available Contentstack field types and their structure. This tool provides complete examples showing how to properly structure each field type when creating or updating content types. Essential for understanding field configurations, required properties, and advanced options.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        fieldType: {
+                            type: 'string',
+                            description: 'Optional: Get detailed information for a specific field type. Available types: "text", "number", "boolean", "isodate", "file", "link", "reference", "json", "group", "blocks", "global_field", "extension". If not provided, returns information for all field types.',
+                            enum: ['text', 'number', 'boolean', 'isodate', 'file', 'link', 'reference', 'json', 'group', 'blocks', 'global_field', 'extension', 'all']
+                        }
+                    }
+                }
+            },
+            {
                 name: 'contentstack_get_content_type',
                 description: 'Retrieve detailed schema information for a specific content type. This shows you all available fields, their types, validations, and relationships. Use this when you need to understand the exact structure before creating or updating entries. Essential for knowing what fields are required, optional, or have specific formats.',
                 inputSchema: {
@@ -160,17 +650,17 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_create_content_type',
-                description: 'Create a new content type (schema) in Contentstack. Define the structure and fields for a new type of content. Supports all field types including text, number, boolean, date, select (with simple values or key-value pairs), JSON RTE (rich text editor with embedded entries), reference fields, custom asset fields, taxonomy fields, and field visibility rules. Use this to programmatically build your content models.',
+                description: 'Create a new content type (schema) in Contentstack. IMPORTANT: Each field in the schema array MUST use these exact property names: "display_name" (not "title"), "uid" (lowercase identifier), "data_type" (not "type"), and "mandatory" (not "required"). Common data_types: "text", "number", "boolean", "isodate", "file". Example field: {"display_name": "Title", "uid": "title", "data_type": "text", "mandatory": true, "unique": false}. For select/dropdown fields, use data_type "text" with an "enum" property containing choices.',
                 inputSchema: {
                     type: 'object',
                     properties: {
                         data: {
                             type: 'object',
-                            description: 'Content type schema definition wrapped in a "content_type" object. Must include title, uid, and schema array defining all fields.',
+                            description: 'Content type schema wrapped in "content_type" object. Example: {"content_type": {"title": "Blog Post", "uid": "blog_post", "schema": [{"display_name": "Title", "uid": "title", "data_type": "text", "mandatory": true}]}}',
                             properties: {
                                 content_type: {
                                     type: 'object',
-                                    description: 'The content type definition with all its configuration',
+                                    description: 'The content type definition',
                                     properties: {
                                         title: {
                                             type: 'string',
@@ -182,10 +672,10 @@ class ContentstackMCPServer {
                                         },
                                         schema: {
                                             type: 'array',
-                                            description: 'Array of field definitions. Each field must have display_name, uid, and data_type. Supports: text, number, boolean, isodate, file (for assets), reference, json (for JSON RTE), group, blocks. See Contentstack docs for complete field schemas.',
+                                            description: 'CRITICAL: Array of field objects. Each field MUST have: "display_name" (string - display label), "uid" (string - lowercase field identifier), "data_type" (string - one of: "text", "number", "boolean", "isodate", "file", "link", "json", "group", "blocks"), "mandatory" (boolean - required field), "unique" (boolean - unique values), "multiple" (boolean - allow multiple values). For text fields with multiline, add field_metadata: {"multiline": true}. For select/dropdown, use data_type "text" with enum: {"advanced": false, "choices": [{"value": "option1"}]} or enum: {"advanced": true, "choices": [{"key": "Label", "value": "value"}]}. Example: [{"display_name": "Title", "uid": "title", "data_type": "text", "mandatory": true, "unique": true}, {"display_name": "Content", "uid": "content", "data_type": "text", "mandatory": false, "field_metadata": {"multiline": true}}]',
                                             items: {
                                                 type: 'object',
-                                                description: 'Field definition with properties like display_name, uid, data_type, mandatory, unique, multiple, etc.'
+                                                description: 'Field definition object with required keys: display_name, uid, data_type. Optional keys: mandatory, unique, multiple, field_metadata, enum (for select fields), reference_to (for references), taxonomies (for taxonomy fields)'
                                             }
                                         },
                                         description: {
@@ -198,21 +688,21 @@ class ContentstackMCPServer {
                                         },
                                         field_rules: {
                                             type: 'array',
-                                            description: 'Field visibility rules to show/hide fields based on conditions. Each rule has conditions (operand_field, operator, value), match_type (all/any), and actions (show/hide target_field).',
+                                            description: 'Field visibility rules. Example: [{"conditions": [{"operand_field": "field_uid", "operator": "equals", "value": "some_value"}], "match_type": "all", "actions": [{"action": "show", "target_field": "another_field_uid"}]}]',
                                             items: {
                                                 type: 'object',
                                                 properties: {
                                                     conditions: {
                                                         type: 'array',
-                                                        description: 'Array of conditions to evaluate'
+                                                        description: 'Array of condition objects with operand_field, operator, and value'
                                                     },
                                                     match_type: {
                                                         type: 'string',
-                                                        description: 'Whether "all" conditions or "any" condition should match'
+                                                        description: 'Either "all" or "any"'
                                                     },
                                                     actions: {
                                                         type: 'array',
-                                                        description: 'Actions to perform when conditions are met (show/hide fields)'
+                                                        description: 'Array of action objects with action ("show" or "hide") and target_field (uid)'
                                                     }
                                                 }
                                             }
@@ -229,7 +719,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_update_content_type',
-                description: 'Update an existing content type schema. Modify fields, add new fields, change validations, or update field visibility rules. Note: Each update increments the content type version automatically. Be careful when modifying or removing fields that contain data. Use contentstack_get_content_type first to see the current schema.',
+                description: 'Update an existing content type schema. IMPORTANT: Use contentstack_get_content_type first to retrieve the current schema, then modify it. Each field MUST use exact property names: "display_name" (not "title"), "uid", "data_type" (not "type"), "mandatory" (not "required"). You must provide the COMPLETE schema including all existing fields plus any new fields. Updates increment the version automatically. Be careful when modifying fields with existing data.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -239,11 +729,11 @@ class ContentstackMCPServer {
                         },
                         data: {
                             type: 'object',
-                            description: 'Updated content type schema wrapped in a "content_type" object. Must include the complete schema definition.',
+                            description: 'Complete updated schema in "content_type" object. MUST include all existing fields. Example: {"content_type": {"title": "Blog Post", "schema": [{"display_name": "Title", "uid": "title", "data_type": "text", "mandatory": true}, ...]}}',
                             properties: {
                                 content_type: {
                                     type: 'object',
-                                    description: 'The updated content type definition',
+                                    description: 'The updated content type definition with complete schema',
                                     properties: {
                                         title: {
                                             type: 'string',
@@ -251,10 +741,10 @@ class ContentstackMCPServer {
                                         },
                                         schema: {
                                             type: 'array',
-                                            description: 'Updated array of field definitions. Must include all fields (existing and new) that should be in the content type.',
+                                            description: 'COMPLETE array of field objects (existing + new). Each field MUST have: "display_name", "uid", "data_type", "mandatory", "unique", "multiple". Use the exact field structure from contentstack_get_content_type response.',
                                             items: {
                                                 type: 'object',
-                                                description: 'Field definition'
+                                                description: 'Field definition with display_name, uid, data_type, mandatory, unique, multiple, etc.'
                                             }
                                         },
                                         description: {
@@ -687,6 +1177,17 @@ class ContentstackMCPServer {
                                 {
                                     type: 'text',
                                     text: JSON.stringify({ tools }, null, 2)
+                                }
+                            ]
+                        };
+
+                    case 'contentstack_field_types_reference':
+                        const fieldTypesReference = this.getFieldTypesReference(args.fieldType);
+                        return {
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: JSON.stringify(fieldTypesReference, null, 2)
                                 }
                             ]
                         };

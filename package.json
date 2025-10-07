@@ -1,6 +1,6 @@
 {
     "name": "contentstack-cursor-mcp",
-    "version": "1.1.18",
+    "version": "1.2.1",
     "description": "Contentstack Content Management API MCP",
     "main": "index.js",
     "types": "index.d.ts",
@@ -49,6 +49,7 @@
         "index.d.ts",
         "mcp-server.js",
         "README.md",
+        "FIELD_EXAMPLES.md",
         "package.json",
         "mcp-config-example.json"
     ]
