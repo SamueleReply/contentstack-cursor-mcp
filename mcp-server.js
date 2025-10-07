@@ -172,6 +172,12 @@ class ContentstackMCPServer {
         const fieldTypes = {
             overview: {
                 description: "Contentstack supports various field types for building content models. Each field type has specific properties and configurations.",
+                bestPractices: {
+                    reuseStrategy: "ALWAYS use contentstack_get_content_types to check existing content types BEFORE creating new ones. Reuse existing structures through reference fields and global fields instead of duplicating content type definitions.",
+                    whenToReference: "If the user mentions entities like 'author', 'category', 'product', 'location', 'tag' - check if those content types already exist and use reference fields to connect to them",
+                    globalFields: "For common field groups (SEO, social sharing, author info), check if global fields exist first before creating duplicate field groups",
+                    avoidDuplication: "Don't create nested group fields for entities that should be separate content types (e.g., if 'author' needs its own management, make it a content type with references, not a group field)"
+                },
                 commonProperties: {
                     display_name: "Human-readable label for the field (e.g., 'Title', 'Description')",
                     uid: "Unique identifier using lowercase letters, numbers, and underscores (e.g., 'title', 'blog_content')",
@@ -402,7 +408,7 @@ class ContentstackMCPServer {
             },
             reference: {
                 data_type: "reference",
-                description: "Reference to other entries - creates relationships between content types",
+                description: "Reference to other entries - creates relationships between content types. BEST PRACTICE: Always check existing content types with contentstack_get_content_types first, then reuse them via references instead of creating duplicate structures.",
                 example: {
                     data_type: "reference",
                     display_name: "Related Articles",
@@ -417,7 +423,13 @@ class ContentstackMCPServer {
                     non_localizable: false,
                     unique: false
                 },
-                notes: "The 'reference_to' array specifies which content types can be referenced. Use ref_multiple: true to allow multiple references."
+                useCases: [
+                    "Link blog posts to authors (instead of duplicating author fields in every post)",
+                    "Connect products to categories (reuse existing category content type)",
+                    "Associate articles with tags (reference existing tag content type)",
+                    "Relate content to locations, departments, or any other existing entity"
+                ],
+                notes: "The 'reference_to' array specifies which content types can be referenced. Use ref_multiple: true to allow multiple references. Set multiple: true on the field to allow selecting multiple entries. IMPORTANT: Use contentstack_get_content_types to discover existing content types before creating new ones - you can often reuse existing structures."
             },
             group: {
                 data_type: "group",
@@ -543,7 +555,7 @@ class ContentstackMCPServer {
             },
             global_field: {
                 data_type: "global_field",
-                description: "Reusable field groups that can be shared across content types",
+                description: "Reusable field groups that can be shared across multiple content types. Perfect for common field sets like SEO metadata, social sharing info, or author details that appear in many content types.",
                 example: {
                     data_type: "global_field",
                     display_name: "SEO Metadata",
@@ -557,7 +569,13 @@ class ContentstackMCPServer {
                     non_localizable: false,
                     unique: false
                 },
-                notes: "The 'reference_to' specifies the UID of the global field to reference. Global fields must be created separately before being referenced."
+                commonUseCases: [
+                    "SEO metadata (meta title, description, keywords) - reuse across all page types",
+                    "Social sharing fields (og:title, og:image, twitter card) - consistent across content",
+                    "Author information - share same author fields across multiple content types",
+                    "Publication settings - reusable publish/expire date configurations"
+                ],
+                notes: "The 'reference_to' specifies the UID of the global field to reference. Global fields must be created separately before being referenced. BEST PRACTICE: Use contentstack_get_content_types to check if appropriate global fields already exist before creating new field groups."
             },
             extension: {
                 data_type: "extension",
@@ -1093,6 +1111,139 @@ class ContentstackMCPServer {
                     },
                     required: ['contentTypeUid', 'entryUid', 'data']
                 }
+            },
+            {
+                name: 'contentstack_get_global_fields',
+                description: 'Retrieve all global fields from your Contentstack stack. Global fields are reusable field groups that can be used across multiple content types, ensuring consistency and reducing duplication. Use this to discover existing global fields before creating new ones.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {}
+                }
+            },
+            {
+                name: 'contentstack_get_global_field',
+                description: 'Retrieve detailed information about a specific global field by its UID. This shows the complete schema of the global field including all nested fields. Use this when you need to understand the structure of a global field before referencing it in a content type.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        uid: {
+                            type: 'string',
+                            description: 'Global field UID (e.g., "seo_metadata", "author_info"). Get this from contentstack_get_global_fields first.'
+                        }
+                    },
+                    required: ['uid']
+                }
+            },
+            {
+                name: 'contentstack_create_global_field',
+                description: 'Create a new global field in Contentstack. Global fields are reusable field groups that can be referenced in multiple content types. The data must be wrapped in a "global_field" object with title, uid, and schema properties. Each field in the schema must use exact property names: "display_name", "uid", "data_type", "mandatory". Global fields can contain nested global fields by using data_type "global_field" with a "reference_to" property.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        data: {
+                            type: 'object',
+                            description: 'Global field definition wrapped in "global_field" object',
+                            properties: {
+                                global_field: {
+                                    type: 'object',
+                                    description: 'The global field definition',
+                                    properties: {
+                                        title: {
+                                            type: 'string',
+                                            description: 'Display name for the global field (e.g., "SEO Metadata", "Author Info")'
+                                        },
+                                        uid: {
+                                            type: 'string',
+                                            description: 'Unique identifier using lowercase letters, numbers, and underscores (e.g., "seo_metadata", "author_info")'
+                                        },
+                                        description: {
+                                            type: 'string',
+                                            description: 'Optional description of the global field'
+                                        },
+                                        schema: {
+                                            type: 'array',
+                                            description: 'Array of field definitions. Each field must have: "display_name", "uid", "data_type", "mandatory", "unique", "multiple". To nest a global field, use data_type "global_field" with "reference_to" property pointing to another global field UID.',
+                                            items: {
+                                                type: 'object',
+                                                description: 'Field definition with display_name, uid, data_type, mandatory, etc.'
+                                            }
+                                        }
+                                    },
+                                    required: ['title', 'uid', 'schema']
+                                }
+                            },
+                            required: ['global_field']
+                        }
+                    },
+                    required: ['data']
+                }
+            },
+            {
+                name: 'contentstack_update_global_field',
+                description: 'Update an existing global field schema. Use contentstack_get_global_field first to retrieve the current schema, then modify it. Each field must use exact property names: "display_name", "uid", "data_type", "mandatory". You must provide the COMPLETE schema including all existing fields plus any new fields. WARNING: Modifying global fields affects all content types that reference them.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        uid: {
+                            type: 'string',
+                            description: 'Global field UID to update (e.g., "seo_metadata", "author_info")'
+                        },
+                        data: {
+                            type: 'object',
+                            description: 'Updated global field data wrapped in "global_field" object',
+                            properties: {
+                                global_field: {
+                                    type: 'object',
+                                    description: 'The updated global field definition with complete schema',
+                                    properties: {
+                                        title: {
+                                            type: 'string',
+                                            description: 'Display name for the global field'
+                                        },
+                                        description: {
+                                            type: 'string',
+                                            description: 'Optional description'
+                                        },
+                                        schema: {
+                                            type: 'array',
+                                            description: 'COMPLETE array of field definitions (existing + new). Each field must have: "display_name", "uid", "data_type", "mandatory", "unique", "multiple".',
+                                            items: {
+                                                type: 'object',
+                                                description: 'Field definition with display_name, uid, data_type, mandatory, etc.'
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            required: ['global_field']
+                        }
+                    },
+                    required: ['uid', 'data']
+                }
+            },
+            {
+                name: 'contentstack_delete_global_field',
+                description: 'Delete a global field from Contentstack. WARNING: If the global field is referenced in any content type, you must pass force=true in the options to delete it. This is a destructive operation that cannot be undone. Deleting a global field will remove it from all content types that reference it.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        uid: {
+                            type: 'string',
+                            description: 'Global field UID to delete (e.g., "seo_metadata", "author_info")'
+                        },
+                        options: {
+                            type: 'object',
+                            description: 'Options for deletion',
+                            properties: {
+                                force: {
+                                    type: 'boolean',
+                                    description: 'Set to true to force delete a global field that is referenced in content types. Default is false.'
+                                }
+                            }
+                        }
+                    },
+                    required: ['uid']
+                }
             }
         ];
 
@@ -1319,6 +1470,61 @@ class ContentstackMCPServer {
                                 {
                                     type: 'text',
                                     text: JSON.stringify(localizeResult, null, 2)
+                                }
+                            ]
+                        };
+
+                    case 'contentstack_get_global_fields':
+                        const globalFields = await cs.getGlobalFields();
+                        return {
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: JSON.stringify(globalFields, null, 2)
+                                }
+                            ]
+                        };
+
+                    case 'contentstack_get_global_field':
+                        const globalField = await cs.getGlobalField(args.uid);
+                        return {
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: JSON.stringify(globalField, null, 2)
+                                }
+                            ]
+                        };
+
+                    case 'contentstack_create_global_field':
+                        const newGlobalField = await cs.createGlobalField(args.data);
+                        return {
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: JSON.stringify(newGlobalField, null, 2)
+                                }
+                            ]
+                        };
+
+                    case 'contentstack_update_global_field':
+                        const updatedGlobalField = await cs.updateGlobalField(args.uid, args.data);
+                        return {
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: JSON.stringify(updatedGlobalField, null, 2)
+                                }
+                            ]
+                        };
+
+                    case 'contentstack_delete_global_field':
+                        const deleteGlobalFieldResult = await cs.deleteGlobalField(args.uid, args.options || {});
+                        return {
+                            content: [
+                                {
+                                    type: 'text',
+                                    text: JSON.stringify(deleteGlobalFieldResult, null, 2)
                                 }
                             ]
                         };

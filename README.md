@@ -209,22 +209,42 @@ const textFieldInfo = await mcpClient.callTool('contentstack_field_types_referen
 // - Select Dropdown
 ```
 
+### Content Type Reuse Strategy ⚡
+
+**IMPORTANT:** Before creating new content types or fields, always check what already exists!
+
+#### Best Practices for Reusing Content Types
+
+1. **Check First**: Use `contentstack_get_content_types` to see existing content types
+2. **Use References**: Connect content types with reference fields instead of duplicating structures
+3. **Global Fields**: Reuse common field groups (SEO, social sharing) across multiple content types
+4. **Avoid Duplication**: If you need "author" info, check if an "author" content type exists - reference it instead of creating duplicate fields
+
+#### When to Use References vs Groups
+
+| Use Reference Field | Use Group Field |
+|---------------------|-----------------|
+| Entity needs independent management (authors, categories) | Data is tightly coupled to parent (address in contact form) |
+| Needs to be shared across multiple entries | Only used within this specific content type |
+| Has its own workflow and permissions | Simple nested data structure |
+| Example: Blog → Author (reference) | Example: Person → Address (group) |
+
 ### Available Field Types
 
-| Field Type | Description | Use Cases |
-|------------|-------------|-----------|
-| `text` | Text content with multiple variants | Titles, descriptions, content, select dropdowns |
-| `number` | Numeric values | Prices, quantities, ratings |
-| `boolean` | True/false toggle | Feature flags, published status |
-| `isodate` | Date and time | Publication dates, event dates |
-| `file` | Media assets | Images, videos, documents |
-| `link` | URL with title | External links, CTAs |
-| `reference` | Entry references | Related content, categories |
-| `json` | JSON Rich Text Editor | Structured rich text content |
-| `group` | Nested field groups | Author info, address details |
-| `blocks` | Modular content blocks | Page sections, flexible layouts |
-| `global_field` | Reusable field groups | SEO metadata, social sharing |
-| `extension` | Custom field extensions | Custom widgets, integrations |
+| Field Type | Description | Use Cases | Reuse Notes |
+|------------|-------------|-----------|-------------|
+| `text` | Text content with multiple variants | Titles, descriptions, content, select dropdowns | - |
+| `number` | Numeric values | Prices, quantities, ratings | - |
+| `boolean` | True/false toggle | Feature flags, published status | - |
+| `isodate` | Date and time | Publication dates, event dates | - |
+| `file` | Media assets | Images, videos, documents | - |
+| `link` | URL with title | External links, CTAs | - |
+| `reference` | Entry references | Related content, categories | **Use to reuse existing content types** |
+| `json` | JSON Rich Text Editor | Structured rich text content | - |
+| `group` | Nested field groups | Address details, coordinates | Use only for tightly coupled data |
+| `blocks` | Modular content blocks | Page sections, flexible layouts | - |
+| `global_field` | Reusable field groups | SEO metadata, social sharing | **Check if global fields exist first** |
+| `extension` | Custom field extensions | Custom widgets, integrations | - |
 
 ### Key Field Properties
 

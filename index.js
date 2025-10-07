@@ -335,6 +335,39 @@ const localizeEntry = async (contentTypeUid, entryUid, data, options = {}, confi
     return makeRequest('POST', endpoint, data, config);
 };
 
+// Global Fields
+const getGlobalFields = async (config = {}) => {
+    return makeRequest('GET', '/global_fields', null, config);
+};
+
+const getGlobalField = async (uid, config = {}) => {
+    return makeRequest('GET', `/global_fields/${uid}`, null, config);
+};
+
+const createGlobalField = async (data, config = {}) => {
+    return makeRequest('POST', '/global_fields', data, config);
+};
+
+const updateGlobalField = async (uid, data, config = {}) => {
+    return makeRequest('PUT', `/global_fields/${uid}`, data, config);
+};
+
+const deleteGlobalField = async (uid, options = {}, config = {}) => {
+    const { force, ...otherOptions } = options;
+    const queryParams = new URLSearchParams();
+
+    if (force) queryParams.append('force', force);
+
+    // Add any other query parameters
+    Object.entries(otherOptions).forEach(([key, value]) => {
+        queryParams.append(key, value);
+    });
+
+    const queryString = queryParams.toString();
+    const endpoint = `/global_fields/${uid}${queryString ? `?${queryString}` : ''}`;
+    return makeRequest('DELETE', endpoint, null, config);
+};
+
 // Initialize function to create a configured instance
 const initialize = (config = {}) => {
     const mergedConfig = { ...config };
@@ -356,7 +389,12 @@ const initialize = (config = {}) => {
         publishEntry: (contentTypeUid, entryUid, data, options) => publishEntry(contentTypeUid, entryUid, data, mergedConfig),
         unpublishEntry: (contentTypeUid, entryUid, data, options) => unpublishEntry(contentTypeUid, entryUid, data, options, mergedConfig),
         getLanguages: () => getLanguages(mergedConfig),
-        localizeEntry: (contentTypeUid, entryUid, data, options) => localizeEntry(contentTypeUid, entryUid, data, options, mergedConfig)
+        localizeEntry: (contentTypeUid, entryUid, data, options) => localizeEntry(contentTypeUid, entryUid, data, options, mergedConfig),
+        getGlobalFields: () => getGlobalFields(mergedConfig),
+        getGlobalField: (uid) => getGlobalField(uid, mergedConfig),
+        createGlobalField: (data) => createGlobalField(data, mergedConfig),
+        updateGlobalField: (uid, data) => updateGlobalField(uid, data, mergedConfig),
+        deleteGlobalField: (uid, options) => deleteGlobalField(uid, options, mergedConfig)
     };
 };
 
@@ -380,5 +418,10 @@ module.exports = {
     publishEntry,
     unpublishEntry,
     getLanguages,
-    localizeEntry
+    localizeEntry,
+    getGlobalFields,
+    getGlobalField,
+    createGlobalField,
+    updateGlobalField,
+    deleteGlobalField
 }; 
