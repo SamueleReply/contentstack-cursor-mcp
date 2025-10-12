@@ -138,6 +138,39 @@ class ContentstackMCPServer {
                         helpfulMessage += '\n    }';
                         helpfulMessage += '\n  }';
                     }
+
+                    // Check for incorrect enum structure (array instead of object)
+                    const fieldsWithInvalidEnum = args.data.content_type.schema.filter(field =>
+                        field.enum && Array.isArray(field.enum)
+                    );
+
+                    if (fieldsWithInvalidEnum.length > 0) {
+                        const fieldNames = fieldsWithInvalidEnum.map(f => f.display_name || f.uid).join(', ');
+                        helpfulMessage += '\n\n🚨 CRITICAL ERROR: Invalid "enum" structure detected!';
+                        helpfulMessage += `\n  Fields with incorrect enum: ${fieldNames}`;
+                        helpfulMessage += '\n\n  ❌ WRONG: "enum" as an array';
+                        helpfulMessage += '\n  "enum": [';
+                        helpfulMessage += '\n    {"value": "option1", "description": "..."},';
+                        helpfulMessage += '\n    {"value": "option2"}';
+                        helpfulMessage += '\n  ]';
+                        helpfulMessage += '\n\n  ✅ CORRECT: "enum" as an object with "advanced" and "choices"';
+                        helpfulMessage += '\n  "enum": {';
+                        helpfulMessage += '\n    "advanced": false,           ← Use false for simple dropdowns';
+                        helpfulMessage += '\n    "choices": [';
+                        helpfulMessage += '\n      {"value": "option1"},      ← Simple format when advanced: false';
+                        helpfulMessage += '\n      {"value": "option2"}';
+                        helpfulMessage += '\n    ]';
+                        helpfulMessage += '\n  }';
+                        helpfulMessage += '\n\n  OR with labels (advanced: true):';
+                        helpfulMessage += '\n  "enum": {';
+                        helpfulMessage += '\n    "advanced": true,            ← Use true for labeled options';
+                        helpfulMessage += '\n    "choices": [';
+                        helpfulMessage += '\n      {"key": "Option 1 Label", "value": "option1"},';
+                        helpfulMessage += '\n      {"key": "Option 2 Label", "value": "option2"}';
+                        helpfulMessage += '\n    ]';
+                        helpfulMessage += '\n  }';
+                        helpfulMessage += '\n\n  REMEMBER: "enum" MUST be an OBJECT, NOT an array!';
+                    }
                 }
             }
 
@@ -155,6 +188,22 @@ class ContentstackMCPServer {
                         helpfulMessage += '\n\n⚠️  IMPORTANT: Schema fields must use exact property names from Contentstack API:';
                         helpfulMessage += '\n  Use "display_name" NOT "title", "data_type" NOT "type", "mandatory" NOT "required"';
                         helpfulMessage += '\n  Get the current schema first with contentstack_get_content_type to see the correct structure.';
+                    }
+
+                    // Check for incorrect enum structure (array instead of object)
+                    const fieldsWithInvalidEnum = args.data.content_type.schema.filter(field =>
+                        field.enum && Array.isArray(field.enum)
+                    );
+
+                    if (fieldsWithInvalidEnum.length > 0) {
+                        const fieldNames = fieldsWithInvalidEnum.map(f => f.display_name || f.uid).join(', ');
+                        helpfulMessage += '\n\n🚨 CRITICAL ERROR: Invalid "enum" structure detected!';
+                        helpfulMessage += `\n  Fields with incorrect enum: ${fieldNames}`;
+                        helpfulMessage += '\n  The "enum" property MUST be an OBJECT, NOT an array.';
+                        helpfulMessage += '\n\n  ✅ CORRECT FORMAT:';
+                        helpfulMessage += '\n  "enum": { "advanced": false, "choices": [{"value": "option1"}] }';
+                        helpfulMessage += '\n  OR';
+                        helpfulMessage += '\n  "enum": { "advanced": true, "choices": [{"key": "Label", "value": "option1"}] }';
                     }
                 }
             }
@@ -668,7 +717,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_create_content_type',
-                description: 'Create a new content type (schema) in Contentstack. IMPORTANT: Each field in the schema array MUST use these exact property names: "display_name" (not "title"), "uid" (lowercase identifier), "data_type" (not "type"), and "mandatory" (not "required"). Common data_types: "text", "number", "boolean", "isodate", "file". Example field: {"display_name": "Title", "uid": "title", "data_type": "text", "mandatory": true, "unique": false}. For select/dropdown fields, use data_type "text" with an "enum" property containing choices.',
+                description: 'Create a new content type (schema) in Contentstack. IMPORTANT: Each field in the schema array MUST use these exact property names: "display_name" (not "title"), "uid" (lowercase identifier), "data_type" (not "type"), and "mandatory" (not "required"). Common data_types: "text", "number", "boolean", "isodate", "file". Example field: {"display_name": "Title", "uid": "title", "data_type": "text", "mandatory": true, "unique": false}. CRITICAL FOR DROPDOWN/SELECT FIELDS: Use data_type "text" with BOTH "display_type": "dropdown" AND "enum" as an OBJECT: {"display_type": "dropdown", "enum": {"advanced": false, "choices": [{"value": "option1"}]}} or {"display_type": "dropdown", "enum": {"advanced": true, "choices": [{"key": "Label", "value": "option1"}]}}. The display_type property is REQUIRED when using enum.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -690,10 +739,10 @@ class ContentstackMCPServer {
                                         },
                                         schema: {
                                             type: 'array',
-                                            description: 'CRITICAL: Array of field objects. Each field MUST have: "display_name" (string - display label), "uid" (string - lowercase field identifier), "data_type" (string - one of: "text", "number", "boolean", "isodate", "file", "link", "json", "group", "blocks"), "mandatory" (boolean - required field), "unique" (boolean - unique values), "multiple" (boolean - allow multiple values). For text fields with multiline, add field_metadata: {"multiline": true}. For select/dropdown, use data_type "text" with enum: {"advanced": false, "choices": [{"value": "option1"}]} or enum: {"advanced": true, "choices": [{"key": "Label", "value": "value"}]}. Example: [{"display_name": "Title", "uid": "title", "data_type": "text", "mandatory": true, "unique": true}, {"display_name": "Content", "uid": "content", "data_type": "text", "mandatory": false, "field_metadata": {"multiline": true}}]',
+                                            description: 'CRITICAL: Array of field objects. Each field MUST have: "display_name" (string - display label), "uid" (string - lowercase field identifier), "data_type" (string - one of: "text", "number", "boolean", "isodate", "file", "link", "json", "group", "blocks"), "mandatory" (boolean - required field), "unique" (boolean - unique values), "multiple" (boolean - allow multiple values). For text fields with multiline, add field_metadata: {"multiline": true}. IMPORTANT: For select/dropdown fields, use data_type "text" with BOTH "display_type": "dropdown" (REQUIRED) AND "enum" as an OBJECT (NOT array): {"display_type": "dropdown", "enum": {"advanced": false, "choices": [{"value": "option1"}]}} or {"display_type": "dropdown", "enum": {"advanced": true, "choices": [{"key": "Label", "value": "value"}]}}. The enum MUST be an object with "advanced" and "choices" properties, and display_type MUST be set to "dropdown" when using enum. Example: [{"display_name": "Title", "uid": "title", "data_type": "text", "mandatory": true, "unique": true}, {"display_name": "Status", "uid": "status", "data_type": "text", "display_type": "dropdown", "enum": {"advanced": false, "choices": [{"value": "draft"}]}}]',
                                             items: {
                                                 type: 'object',
-                                                description: 'Field definition object with required keys: display_name, uid, data_type. Optional keys: mandatory, unique, multiple, field_metadata, enum (for select fields), reference_to (for references), taxonomies (for taxonomy fields)'
+                                                description: 'Field definition object with required keys: display_name, uid, data_type. Optional keys: mandatory, unique, multiple, display_type (REQUIRED when using enum - set to "dropdown"), field_metadata, enum (MUST be object with "advanced" and "choices" properties, NOT an array), reference_to (for references), taxonomies (for taxonomy fields)'
                                             }
                                         },
                                         description: {
@@ -737,7 +786,7 @@ class ContentstackMCPServer {
             },
             {
                 name: 'contentstack_update_content_type',
-                description: 'Update an existing content type schema. IMPORTANT: Use contentstack_get_content_type first to retrieve the current schema, then modify it. Each field MUST use exact property names: "display_name" (not "title"), "uid", "data_type" (not "type"), "mandatory" (not "required"). You must provide the COMPLETE schema including all existing fields plus any new fields. Updates increment the version automatically. Be careful when modifying fields with existing data.',
+                description: 'Update an existing content type schema. IMPORTANT: Use contentstack_get_content_type first to retrieve the current schema, then modify it. Each field MUST use exact property names: "display_name" (not "title"), "uid", "data_type" (not "type"), "mandatory" (not "required"). You must provide the COMPLETE schema including all existing fields plus any new fields. Updates increment the version automatically. Be careful when modifying fields with existing data. CRITICAL: For select/dropdown fields, you MUST include BOTH "display_type": "dropdown" (REQUIRED) AND "enum" as an OBJECT with "advanced" and "choices" properties (NOT an array).',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -759,10 +808,10 @@ class ContentstackMCPServer {
                                         },
                                         schema: {
                                             type: 'array',
-                                            description: 'COMPLETE array of field objects (existing + new). Each field MUST have: "display_name", "uid", "data_type", "mandatory", "unique", "multiple". Use the exact field structure from contentstack_get_content_type response.',
+                                            description: 'COMPLETE array of field objects (existing + new). Each field MUST have: "display_name", "uid", "data_type", "mandatory", "unique", "multiple". Use the exact field structure from contentstack_get_content_type response. IMPORTANT: For dropdown/select fields, "enum" MUST be an object like {"advanced": false, "choices": [{"value": "option1"}]}, NOT an array.',
                                             items: {
                                                 type: 'object',
-                                                description: 'Field definition with display_name, uid, data_type, mandatory, unique, multiple, etc.'
+                                                description: 'Field definition with display_name, uid, data_type, mandatory, unique, multiple, etc. If using enum, it MUST be an object with "advanced" and "choices" properties.'
                                             }
                                         },
                                         description: {
@@ -1536,13 +1585,23 @@ class ContentstackMCPServer {
                         );
                 }
             } catch (error) {
+                // Log error for debugging
+                console.error('[MCP] Contentstack API Error:', error.message);
+                if (error.responseData) {
+                    console.error('[MCP] API Response:', JSON.stringify(error.responseData, null, 2));
+                }
+
+                // Pass through the error with full API response data
                 let errorMessage = error.message || 'Unknown error occurred';
 
-                const fullErrorMessage = `${errorMessage}`;
+                // Include the full API response in the error message for the orchestrator to parse
+                if (error.responseData) {
+                    errorMessage += '\n\nAPI_RESPONSE: ' + JSON.stringify(error.responseData);
+                }
 
                 throw new this.McpError(
                     this.ErrorCode.InternalError,
-                    fullErrorMessage
+                    errorMessage
                 );
             }
         });
